@@ -1,10 +1,10 @@
-# 🚀 Proyecto Final SIS313: [Número de Grupo] - [Título del Proyecto]
+# 🚀 Proyecto Final SIS313: [Título del Proyecto]
 
 > **Asignatura:** SIS313: Infraestructura, Plataformas Tecnológicas y Redes<br>
 > **Semestre:** 2/2025<br>
 > **Docente:** Ing. Marcelo Quispe Ortega
 
-## 👥 Miembros del Equipo
+## 👥 Miembros del Equipo ([Número o denominación del grupo])
 
 | Nombre Completo | Rol en el Proyecto | Contacto (GitHub/Email) |
 | :--- | :--- | :--- |
