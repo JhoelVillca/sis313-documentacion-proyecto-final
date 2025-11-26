@@ -107,6 +107,49 @@ Consiste en la creación y configuración inicial de los 4 Nodos Virtuales (VMs)
 * Establecer los cimientos del sistema.
 * Segregar funciones: Separar la lógica de negocio (App/DB), el almacenamiento (Bóveda) y la gestión (Control) para evitar un "Punto Único de Fallo" (SPOF).
 
+### Paso 1: Definición del Hardware Virtual
+
+**📋 Descripción:**
+Vamos a configurar "el chasis" de nuestras 4 máquinas virtuales en **VirtualBox**. Dado que son 4 computadoras físicas, se creara **una VM en cada laptop**.
+
+Configura cada VM con los siguientes parámetros críticos:
+
+| VM | Rol | RAM | CPU | Disco Principal (OS) | Discos Extra | Red |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **VM1** | `minio-vault` | 2048 MB | 2 | 25 GB (VDI Dinámico) | **+20 GB** (VDI para Backups) | NAT |
+| **VM2** | `app-node` | 1024 MB | 1 | 25 GB (VDI Dinámico) | - | NAT |
+| **VM3** | `db-node` | 2048 MB | 2 | 25 GB (VDI Dinámico) | **+10 GB** (VDI para LVM) | NAT |
+| **VM4** | `drp-control` | 1024 MB | 1 | 25 GB (VDI Dinámico) | - | NAT |
+
+> **Nota Crítica:** En la configuración de Red de VirtualBox, debe estar en **"NAT"**. Esto aísla la VM pero le da salida a internet usando la IP de la maquina fisica.
+
+Establece los límites físicos de nuestros servidores. Asignar discos secundarios a la VM1 y VM3 es vital porque simula la separación profesional entre "Sistema Operativo" y "Datos Críticos". Si el OS explota, el disco de datos sobrevive.
+
+Tener los 4 contenedores virtuales listos para recibir el sistema operativo, con el almacenamiento físico segregado correctamente para cumplir con los requisitos de LVM y Backups.
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -----
 
 ## Fase 2: Implementación de Red de Malla (Overlay Network)
