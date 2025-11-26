@@ -1,8 +1,10 @@
 # 🚀 Proyecto Final SIS313: [Número] - [Título del Proyecto Seleccionado]
 
 > **Asignatura:** SIS313: Infraestructura, Plataformas Tecnológicas y Redes
+
 > **Semestre:** 2/2025
-> **Docente:** [Nombre del Docente]
+
+> **Docente:** Ing. Marcelo Quispe Ortega
 
 ---
 
