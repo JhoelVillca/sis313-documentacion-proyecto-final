@@ -4,8 +4,6 @@
 > **Semestre:** 2/2025<br>
 > **Docente:** Ing. Marcelo Quispe Ortega
 
----
-
 ## 👥 Miembros del Equipo
 
 | Nombre Completo | Rol en el Proyecto | Contacto (GitHub/Email) |
@@ -14,8 +12,6 @@
 | [Nombre y Apellido 2] | [Rol Principal: Ej. Ingeniero de Automatización] | [Usuario de GitHub] |
 | [Nombre y Apellido 3] | [Rol Principal: Ej. Administrador de Sistemas] | [Usuario de GitHub] |
 | [Nombre y Apellido 4] | [Rol Opcional] | [Usuario de GitHub] |
-
----
 
 ## 🎯 I. Objetivo del Proyecto
 
@@ -28,8 +24,6 @@ Describe el objetivo específico y medible del proyecto, tal como se define en e
 Explica por qué este proyecto es relevante para una infraestructura universitaria o empresarial. Menciona los problemas de la continuidad operacional (T1) o la seguridad (T5) que resuelve.
 
 > **Justificación:** [Explicar la justificación, ej: "El proyecto elimina el Single Point of Failure en la BD, aplicando conceptos de Alta Disponibilidad (T2) y mejorando la capacidad de respuesta de aplicaciones con muchas consultas de lectura."]
-
----
 
 ## 🛠️ III. Tecnologías y Conceptos Implementados
 
@@ -54,8 +48,6 @@ Marca con un ✅ los temas avanzados de la asignatura que fueron implementados:
 * **Monitoreo (T4/T1):** [Describir cómo: Ej. Uso de Prometheus/Grafana para métricas en tiempo real.]
 * **Networking Avanzado (T3):** [Describir cómo: Ej. Implementación de VLANs o Enrutamiento Estático.]
 
----
-
 ## 🌐 IV. Diseño de la Infraestructura y Topología
 
 ### 4.1. Diseño Esquemático
@@ -77,8 +69,6 @@ Describe la estrategia de diseño y las decisiones críticas.
 * **Estrategia de Replicación:** [Ej. Se optó por la replicación asíncrona de MariaDB debido a la menor latencia, priorizando la separación de lectura/escritura con ProxySQL.]
 * **Estrategia de Hardening:** [Ej. Se aplicaron los estándares CIS de hardening mediante un playbook de Ansible para la automatización de la seguridad inicial.]
 
----
-
 ## 📋 V. Guía de Implementación y Puesta en Marcha
 
 Documenta los pasos esenciales para que cualquier persona pueda replicar el proyecto (instalación, configuración de ficheros clave, comandos).
@@ -97,8 +87,6 @@ Documenta los pasos esenciales para que cualquier persona pueda replicar el proy
 * `/etc/nginx/sites-available/proxy.conf`: Configuración del Balanceador y Hardening TLS.
 * `/etc/keepalived/keepalived.conf`: Configuración del Failover (MASTER/BACKUP).
 
----
-
 ## ⚠️ VI. Pruebas y Validación
 
 | Prueba Realizada | Resultado Esperado | Resultado Obtenido |
@@ -106,8 +94,6 @@ Documenta los pasos esenciales para que cualquier persona pueda replicar el proy
 | Test de Failover de la BD (Apagar Maestro) | El esclavo debe tomar las escrituras o el servicio debe seguir activo. | [OK/FALLIDO] |
 | Prueba de Carga/Estrés (Balanceo) | El tráfico se distribuye equitativamente entre los servidores de aplicación. | [OK/FALLIDO] |
 | Test de Seguridad (SSL/Firewall) | El acceso HTTP debe redirigirse a HTTPS y el Firewall debe bloquear todos los puertos excepto 443. | [OK/FALLIDO] |
-
----
 
 ## 📚 VII. Conclusiones y Lecciones Aprendidas
 
