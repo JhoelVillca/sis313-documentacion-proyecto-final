@@ -87,8 +87,8 @@ Documenta los pasos esenciales para que cualquier persona pueda replicar el proy
 * `/etc/nginx/sites-available/proxy.conf`: Configuración del Balanceador y Hardening TLS.
 * `/etc/keepalived/keepalived.conf`: Configuración del Failover (MASTER/BACKUP).
 
-**Incluir además los archivos de configuración y software a utilizar dentro del proyecto y organizados en carpetas.
-**
+**Incluir además los archivos de configuración y software a utilizar dentro del proyecto y organizados en carpetas.**
+
 ## ⚠️ VI. Pruebas y Validación
 
 | Prueba Realizada | Resultado Esperado | Resultado Obtenido |
