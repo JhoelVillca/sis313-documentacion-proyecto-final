@@ -1,9 +1,7 @@
-# 🚀 Proyecto Final SIS313: [Número] - [Título del Proyecto Seleccionado]
+# 🚀 Proyecto Final SIS313: [Número de Grupo] - [Título del Proyecto]
 
-> **Asignatura:** SIS313: Infraestructura, Plataformas Tecnológicas y Redes
-
-> **Semestre:** 2/2025
-
+> **Asignatura:** SIS313: Infraestructura, Plataformas Tecnológicas y Redes<br>
+> **Semestre:** 2/2025<br>
 > **Docente:** Ing. Marcelo Quispe Ortega
 
 ---
@@ -21,15 +19,15 @@
 
 ## 🎯 I. Objetivo del Proyecto
 
-[cite_start]Describe el objetivo **específico** y **medible** del proyecto, tal como se define en el banco de proyectos[cite: 17, 23, 36].
+Describe el objetivo específico y medible del proyecto, tal como se define en el banco de proyectos o tal como lo plantean como proyecto.
 
-> [cite_start]**Objetivo:** [Indicar el objetivo del proyecto, ej: "Diseñar y configurar un clúster de Base de Datos con replicación Maestro-Esclavo para optimizar el rendimiento y la tolerancia a fallos." [cite: 23]]
+> **Objetivo:** [Indicar el objetivo del proyecto, ej: "Diseñar y configurar un clúster de Base de Datos con replicación Maestro-Esclavo para optimizar el rendimiento y la tolerancia a fallos."]
 
 ## 💡 II. Justificación e Importancia
 
 Explica por qué este proyecto es relevante para una infraestructura universitaria o empresarial. Menciona los problemas de la continuidad operacional (T1) o la seguridad (T5) que resuelve.
 
-> [cite_start]**Justificación:** [Explicar la justificación, ej: "El proyecto elimina el Single Point of Failure en la BD, aplicando conceptos de Alta Disponibilidad (T2) y mejorando la capacidad de respuesta de aplicaciones con muchas consultas de lectura." [cite: 24, 25]]
+> **Justificación:** [Explicar la justificación, ej: "El proyecto elimina el Single Point of Failure en la BD, aplicando conceptos de Alta Disponibilidad (T2) y mejorando la capacidad de respuesta de aplicaciones con muchas consultas de lectura."]
 
 ---
 
@@ -95,9 +93,9 @@ Documenta los pasos esenciales para que cualquier persona pueda replicar el proy
 3.  **Ejecución:** Ejecutar el playbook principal: `ansible-playbook setup.yml`.
 
 ### 5.3. Ficheros de Configuración Clave
-* `ansible/playbooks/db_cluster.yml`: Playbook para la replicación y ProxySQL.
-* `etc/nginx/sites-available/proxy.conf`: Configuración del Balanceador y Hardening TLS.
-* `etc/keepalived/keepalived.conf`: Configuración del Failover (MASTER/BACKUP).
+* `/etc/ansible/playbooks/db_cluster.yml`: Playbook para la replicación y ProxySQL.
+* `/etc/nginx/sites-available/proxy.conf`: Configuración del Balanceador y Hardening TLS.
+* `/etc/keepalived/keepalived.conf`: Configuración del Failover (MASTER/BACKUP).
 
 ---
 
