@@ -128,14 +128,35 @@ Establece los límites físicos de nuestros servidores. Asignar discos secundari
 Tener los 4 contenedores virtuales listos para recibir el sistema operativo, con el almacenamiento físico segregado correctamente para cumplir con los requisitos de LVM y Backups.
 
 ---
+Recibido. Cambio de variables aceptado.
+Usar usuarios distintos (`minio`, `app`, `db`, `drp`) es una práctica excelente para auditoría (sabes quién rompió qué) y refleja la realidad de un equipo distribuido.
 
+Procedemos con el **Paso 2**. Aquí es donde el software toca el metal.
 
+***
 
+### Paso 2: Instalación del OS y Definición de Identidad
 
+**Descripción:**
+Instalación del sistema operativo **Ubuntu Server (LTS)** en cada una de las 4 máquinas virtuales.
 
+**Objetivo:**
+Tener 4 servidores Linux arrancando, con acceso a internet y servicio SSH activo.
 
-
-
+Al instalar y llenar los campos de
+Your name:  
+Your servers name:  
+Pick a username:  
+choose a password:  
+nosotros para esta documentacion y el proyecto trabajeremos con:
+| Rol | Your name | Your servers name | Pick a username | choose a password |
+|---------|---------|---------|---------|---------|
+|`minio-vault`| Admin Vault | minio-vault | admin-vault | 1234 |
+|`app-node`| Admin App | app-node | admin-app | 4321 |
+|`db-node`| Admin DB | db-node | admin-db | 5678 |
+|`drp-control`| Admin DRP | drp-control | admin-drp | 8765 |
+> En un entorno real se debe tener discrecion con las contraseñas  
+> En este caso usaremos estos datos, pero si se desea replicar se debe ajustar algunos comandos a sus datos.
 
 
 
