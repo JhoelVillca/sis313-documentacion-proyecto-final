@@ -159,6 +159,84 @@ nosotros para esta documentacion y el proyecto trabajeremos con:
 > En este caso usaremos estos datos, pero si se desea replicar se debe ajustar algunos comandos a sus datos.
 
 
+-----
+
+### Paso 3: Despliegue de la Red Overlay (Tailscale)
+Para trabajar este proyecto de forma remota usaremos Tailscale.
+**📋 Descripción:**
+Instalación del cliente **Tailscale** en los 4 nodos. Tailscale es una VPN de malla (Mesh VPN) basada en el protocolo **WireGuard** (famoso por ser ligero y seguro).
+A diferencia de las VPN tradicionales que redirigen todo el tráfico a un servidor central lento, Tailscale crea túneles encriptados punto-a-punto (P2P) entre las máquinas.
+
+**Objetivo:**
+Lograr que `minio-vault` pueda hacer ping a `db-node` usando solo su nombre, independientemente de la red física a la que estén conectados.
+
+-----
+
+### 📝 Procedimiento de Conexión
+
+*Instrucciones para el equipo: Realizar en las 4 máquinas simultáneamente.*
+
+**1. Registro en la Plataforma (Solo uno, cualquiera)**
+
+  * Entrar a [tailscale.com](https://tailscale.com) y crear una cuenta gratuita (usar GitHub o Google).
+  * Te aparece la opcion de agregar dispositivo, escojemos linux, en la parte inferior nos muestra un comando.
+
+**2. Instalación del Agente**
+En cada una de las 4 Maquinas, ejecutar el comando oficial de instalación.
+*(Nota: Necesitas tener internet activo en la VM).*
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+```
+
+> `curl` es una herramienta para transferir datos con URLs. Las banderas `-fsSL` le dicen: "Falla en silencio si hay error, sigue redirecciones, hazlo seguro (SSL) y no muestres la barra de carga fea".
+
+**3. Autenticación del Nodo**
+Una vez instalado, levantamos el servicio.
+
+```bash
+sudo tailscale up
+```
+
+**4. El Enlace de autenticacion**
+
+  * La terminal mostrará un enlace largo: `https://login.tailscale.com/a/12345abcdef`.
+  * **Acción:** Copia ese enlace, pégalo en el navegador de tu computadora física y autoriza la máquina con tu cuenta.
+
+**5. Renombrar las Máquinas**
+
+  * Ve a la consola web de Tailscale.
+  * Verás las 4 máquinas con nombres genéricos (ej. `ubuntu-2204`).
+  * **Vital:** Haz clic en los 3 puntos (...) y renómbralas para que coincidan con nuestra arquitectura:
+      * `minio-vault`
+      * `app-node`
+      * `db-node`
+      * `drp-control`
+  * Activa la opción **"MagicDNS"** en la configuración de Tailscale si no está activa.
+
+-----
+
+### Verificación
+
+Desde la máquina `drp-control`, intenta contactar a la base de datos por su nombre:
+
+```bash
+ping db-node -c 4
+```
+
+  * **Éxito:** Recibes respuesta de una IP rara (ej. `100.x.y.z`) y 0% packet loss.
+  * **Fracaso:** "Temporary failure in name resolution". (Revisa si MagicDNS está activado en la web).
+
+-----
+
+
+
+
+
+
+
+
+
 
 
 
