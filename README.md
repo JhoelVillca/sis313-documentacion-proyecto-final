@@ -172,7 +172,7 @@ Lograr que `minio-vault` pueda hacer ping a `db-node` usando solo su nombre, ind
 
 -----
 
-### 📝 Procedimiento de Conexión
+### Procedimiento de Conexión
 
 *Instrucciones para el equipo: Realizar en las 4 máquinas simultáneamente.*
 
@@ -202,30 +202,33 @@ sudo tailscale up
 
   * La terminal mostrará un enlace largo: `https://login.tailscale.com/a/12345abcdef`.
   * **Acción:** Copia ese enlace, pégalo en el navegador de tu computadora física y autoriza la máquina con tu cuenta.
+    con eso la maquina devio haberse vinculado a la cuenta, en caso de que sea la primera vez, te pedira una segunda maquina:
+    ![Pide segunda maquina](Imagenes/FirstTime_SecondMachine.png)
+Esto se hace para las maquinas que necesites conectar este caso solo son 4.
 
 **5. Renombrar las Máquinas**
 
-  * Ve a la consola web de Tailscale.
+  * Ve al dashboar de la web de Tailscale.
   * Verás las 4 máquinas con nombres genéricos (ej. `ubuntu-2204`).
-  * **Vital:** Haz clic en los 3 puntos (...) y renómbralas para que coincidan con nuestra arquitectura:
+  * En caso de que no aparescan los nombres de los servidores
+  * Haz clic en los 3 puntos (...) y cambiarles el nombre para que coincidan con nuestra arquitectura:
       * `minio-vault`
       * `app-node`
       * `db-node`
       * `drp-control`
-  * Activa la opción **"MagicDNS"** en la configuración de Tailscale si no está activa.
+  * Esta opcion normalmente viene ya activado, pero en caso de que no ve a tailscale y  DNS>MagicDNS Y Activa la opción.
 
 -----
 
 ### Verificación
 
-Desde la máquina `drp-control`, intenta contactar a la base de datos por su nombre:
+Desde cualquier maquina por ejemplo `drp-control`, intenta contactar a la base de datos por su nombre:
 
 ```bash
 ping db-node -c 4
 ```
+> Deveria poder conectarte a cualquiera de las maquinas
 
-  * **Éxito:** Recibes respuesta de una IP rara (ej. `100.x.y.z`) y 0% packet loss.
-  * **Fracaso:** "Temporary failure in name resolution". (Revisa si MagicDNS está activado en la web).
 
 -----
 
