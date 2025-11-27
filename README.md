@@ -116,9 +116,9 @@ Configura cada VM con los siguientes parámetros críticos:
 
 | VM | Rol | RAM | CPU | Disco Principal (OS) | Discos Extra | Red |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **VM1** | `minio-vault` | 2048 MB | 2 | 25 GB (VDI Dinámico) | **+20 GB** (VDI para Backups) | NAT |
+| **VM1** | `minio-vault` | 1024 MB | 2 | 25 GB (VDI Dinámico) | **+20 GB** (VDI para Backups) | NAT |
 | **VM2** | `app-node` | 1024 MB | 1 | 25 GB (VDI Dinámico) | - | NAT |
-| **VM3** | `db-node` | 2048 MB | 2 | 25 GB (VDI Dinámico) | **+10 GB** (VDI para LVM) | NAT |
+| **VM3** | `db-node` | 1024 MB | 2 | 25 GB (VDI Dinámico) | **+10 GB** (VDI para LVM) | NAT |
 | **VM4** | `drp-control` | 1024 MB | 1 | 25 GB (VDI Dinámico) | - | NAT |
 
 > **Nota Crítica:** En la configuración de Red de VirtualBox, debe estar en **"NAT"**. Esto aísla la VM pero le da salida a internet usando la IP de la maquina fisica.
