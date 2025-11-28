@@ -10,7 +10,7 @@
 | :--- | :--- | :--- |
 | [Nombre y Apellido 1] | [Rol Principal: Ej. Arquitecto de Seguridad] | [Usuario de GitHub] |
 | [Nombre y Apellido 2] | [Rol Principal: Ej. Ingeniero de Automatización] | [Usuario de GitHub] |
-| [Nombre y Apellido 3] | [Rol Principal: Ej. Administrador de Sistemas] | [Usuario de GitHub] |
+| Jhoel Mauricio Villca Villca | Rol  | [JhoelVillca](https://github.com/JhoelVillca) |
 | [Nombre y Apellido 4] | [Rol Opcional] | [Usuario de GitHub] |
 
 ## 🎯 I. Objetivo del Proyecto
