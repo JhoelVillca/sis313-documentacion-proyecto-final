@@ -306,6 +306,57 @@ En ese caso seguiremos esto para poder trabajar sin internet ni Tailscale, y se 
 
 -----
 
+### Paso 5: agregar y verificar Discos en caso de que no se haya hecho aun. 
+Verificaremos si el sistema operativo reconoce los discos secundarios (`sdb`). Si no están, apagaremos las máquinas y los "enchufaremos" virtualmente.
+Confirmar que `minio-vault` tiene su bóveda de 20GB y `db-node` tiene su disco para snapshots de 10GB.
+
+1.  **Apagar Máquina:** `sudo poweroff` (en `minio-vault` y `db-node`).
+2.  **VirtualBox:**
+      * Selecciona la VM.
+      * Clic en **Configuración** \> **Almacenamiento**.
+      * Junto a "Controlador: SATA", clic en el icono de **"Añadir Disco Duro"**.
+        
+      * **Crear** \> **VDI** \> **Reservado dinámicamente**.
+      * **Tamaño:**
+          * Para `minio-vault`: **20 GB**.
+          * Para `db-node`: **10 GB**.
+      * **Aceptar**.
+3.  **Encender Máquina:** Inicia la VM de nuevo.
+4.  **Verificar:** Corre `lsblk`. Ahora debería aparecer `sdb`.
+
+> **Nota:** Aun no los vamos a formatearlos o montarlos todavía. De eso nos encargaremos en las fases de MinIO y LVM respectivamente.
+
+**Una observación sobre tu tabla:**
+Veo que le asignaste **1024 MB de RAM** a todas las máquinas.
+
+  * **Advertencia:** `minio-vault` (VM1) va a correr Docker + MinIO. Con 1GB de RAM va a estar apretado. Si tu laptop física tiene memoria de sobra, súbele a **2048 MB** a la VM1 ahora que estás reiniciando. Si no, déjalo en 1GB, pero no le pidas peras al olmo si va un poco lento.
+
+¿Confirmas que `lsblk` muestra los discos `sdb` en VM1 y VM3?
+Si es afirmativo, di **"Discos Listos"** y lanzamos la **Fase 2: La Bóveda**.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## Fase 2: Implementación de Red de Malla (Overlay Network)
 **Descripción:**
 Despliegue de una red privada virtual (VPN de malla) utilizando **Tailscale/ZeroTier**. Esto crea una capa de red abstracta sobre la infraestructura física, permitiendo que las máquinas se comuniquen de forma segura y encriptada sin depender de la configuración del router local (Wi-Fi de la feria o laboratorio).
