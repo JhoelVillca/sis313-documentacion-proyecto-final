@@ -1139,7 +1139,7 @@ sudo mkfs.ext4 /dev/vg_datos/lv_mysql
 > Este comando da formato ext4 al volumen lógico, convirtiéndolo en un espacio listo para guardar datos. Sin este paso, el LV existiría, pero no podría almacenar archivos porque no tendría un sistema de archivos definido.  
 
 
-#### 6\. Migración de Datos (El Trasplante)
+#### 6\. Migración de Datos
 
 Moveremos los datos existentes al nuevo disco sin perder nada.
 
@@ -1226,52 +1226,131 @@ sudo systemctl start mariadb
 
 Vuelve al navegador de app-node, a http://app-node/index.php y deberia seguir la base de datos.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 -----
 
 ## Fase 6: Configuración del Motor de Resiliencia (Restic)
 **Descripción:**
 Instalación e inicialización de **Restic** en los nodos de aplicación y base de datos. Se configuran las variables de entorno para conectar con la Bóveda (MinIO) y se definen las claves de encriptación (AES-256).
 
-**Objetivo y Aporte:**
 * **Eficiencia:** Implementar la deduplicación de datos. Solo se almacenan los bloques que han cambiado, ahorrando espacio y ancho de banda.
 * **Seguridad:** Garantizar que ningún dato salga del servidor sin estar cifrado (Encryption at Rest & in Transit).
+Instalar el agente de backup en las víctimas (Web y DB), conectarlas a la Bóveda (MinIO) y cifrar la comunicación.
+Restic no tiene "servidor". Es un binario que se ejecuta, hace el trabajo y se cierra. La "inteligencia" está en cómo lo invocamos.
+
+-----
+
+
+### Paso 1 Instalación del Agente
+
+**Ubicación:** Ejecutar en **VM encargado de `app-node`** y **VM encargado de `db-node`**.
+*(En ambos servidores es igual).*
+
+Actualizamos repositorios e instalamos la herramienta:
+
+```bash
+sudo apt update && sudo apt install restic -y
+```
+> actualiza los repositorios e instala Restic en tu servidor para poder hacer respaldos seguros y deduplicados
+
+-----
+
+### Paso 2: Inicialización del Repositorio
+
+Ejecutar en **la maquina encargada de `app-node`**.
+
+Restic necesita saber tres cosas: **DÓNDE** guardar (MinIO), **QUIÉN** eres (Credenciales) y **CÓMO** cifrar (Password de Restic).
+
+Copia y pega este bloque completo en la terminal:
+
+```bash
+export AWS_ACCESS_KEY_ID="admin"
+export AWS_SECRET_ACCESS_KEY="SuperSecretKey123"
+export RESTIC_REPOSITORY="s3:http://minio-vault:9000/backup-repo"
+export RESTIC_PASSWORD="HolaMundo"
+restic init
+```
+> `export AWS_ACCESS_KEY_ID="admin"` Define la variable de entorno con el usuario de acceso para la bóveda MinIO. Es la credencial que identifica quién eres   
+> `export AWS_SECRET_ACCESS_KEY="SuperSecretKey123"` Define la clave secreta asociada al usuario. Es la contraseña que permite autenticarte contra MinIO  
+> `export RESTIC_REPOSITORY="s3:http://minio-vault:9000/backup-repo"` Indica dónde se guardarán los respaldos. En este caso, un repositorio alojado en MinIO, accesible en la dirección http://minio-vault:9000/backup-repo   
+> `export RESTIC_PASSWORD="HolaMundo"` Define la contraseña de cifrado que Restic usará para proteger los datos con AES-256. Sin esta clave, los respaldos no pueden ser recuperados., es decir agarrara HolaMundo y lo va cifrar usando AES-256.  
+> `restic init` Inicializa el repositorio en la ubicación indicada, creando la estructura interna necesaria para almacenar respaldos
+
+> **Resultado Esperado:**
+> Deberías ver algo como: `created restic repository b9e9b55c80 at s3:http://minio-vault:9000/backup-repo`.
+>
+> Si te dice `Fatal: create repository at ... failed: repository master key and config already initialized`, significa que el repositorio ya existía.  solo significa que ya está listo.
+
+-----
+
+### 3: Inicialización del Repositorio - Base de Datos
+
+**Ubicación:** Ejecutar en **VM (`db-node`)**.
+
+Repetimos el proceso. Como ambos apuntan al **MISMO** bucket (`backup-repo`), Restic es lo suficientemente inteligente para mezclar los datos sin sobrescribirse, gracias a la deduplicación.
+
+```bash
+export AWS_ACCESS_KEY_ID="admin"
+export AWS_SECRET_ACCESS_KEY="SuperSecretKey123"
+export RESTIC_REPOSITORY="s3:http://minio-vault:9000/backup-repo"
+export RESTIC_PASSWORD="HolaMundo"
+restic init
+```
+
+*(Probablemente te diga que el repo ya existe porque lo creó la VM2 hace un minuto. Eso es **CORRECTO**. Solo confirma que la VM3 también tiene acceso).*
+
+-----
+
+### Prueba (El Primer Backup)
+
+Antes de automatizar en la Fase 7, debemos probar que funciona manualmente.
+
+**En `app-node`**, ejecuta esto para guardar tu página web:
+Recordamos las variables (porque al cerrar la terminal se borran)
+```bash
+export AWS_ACCESS_KEY_ID="admin"
+export AWS_SECRET_ACCESS_KEY="SuperSecretKey123"
+export RESTIC_REPOSITORY="s3:http://minio-vault:9000/backup-repo"
+export RESTIC_PASSWORD="HolaMundo"
+restic backup /var/www/html --tag "prueba-manual"
+```
+> `restic backup /var/www/html --tag "prueba-manual"` Ejecuta un respaldo manual de la carpeta /var/www/html (la página web), lo guarda cifrado en el repositorio y le asigna la etiqueta "prueba-manual" para identificarlo fácilmente después.
+
+> **Verificación:**
+> Deberías ver: `snapshot <ID> saved`.
+> Y estadísticas como: `Files: 2, New: 100%`.
+Hasta este punto ya tenemos para sacar snapshop a la pagina, aun no de la base de datos.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -----
 
