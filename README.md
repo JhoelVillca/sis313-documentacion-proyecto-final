@@ -1117,6 +1117,168 @@ Implementación de **LVM (Logical Volume Manager)** en el nodo de Base de Datos.
 **Objetivo y Aporte:**
 * **Atomicidad:** Habilitar la capacidad de tomar *Snapshots* (fotografías instantáneas) del disco.
 * **Consistencia:** Asegurar que los backups de la base de datos se realicen sin corromper la información, incluso si el sistema está recibiendo escrituras en ese milisegundo.
+-----
+
+### Paso 1: Migración de la Base de Datos a LVM (VM3)
+
+**Ubicación:** Ejecutar en **el servidor con el rol de `db-node`**.
+**Objetivo:** Inicializar el disco secundario de 10GB con LVM y migrar la carpeta de datos de MariaDB (`/var/lib/mysql`) a este nuevo volumen.
+
+#### 1\. Detener el servicio
+
+Detenemos la base de datos.
+
+```bash
+sudo systemctl stop mariadb
+```
+
+#### 2\. Inicialización de LVM (El Disco Físico de 10 GB)
+
+Preparamos el disco de 10GB (`/dev/sdb`) para ser gestionado por LVM.
+
+```bash
+sudo pvcreate /dev/sdb
+```
+
+>  `pvcreate` (Physical Volume Create) marca el disco duro con una etiqueta especial que dice "propiedad de LVM".  
+> basicamente marca el disco como apto para LVM.
+> Primer nivel (PV): el disco crudo preparado → como un ladrillo. 
+
+#### 3\. Creación del Grupo
+
+Creamos un "Grupo de Volúmenes" llamado `vg_datos`.
+
+```bash
+sudo vgcreate vg_datos /dev/sdb
+```
+
+> `vgcreate` (Volume Group) agrupa discos físicos en una sola piscina de almacenamiento abstracto, es decir crea un Volumen Group en LVM.  
+> `vg_datos` Es el nombre que le daremos al grupo de volumenes.  
+> Basicamente arma el segundo nivel de la jerarquia de LVM, que es el grupo de volúmenes.  
+> Segundo nivel (VG): el grupo de volúmenes → como una pared hecha con esos ladrillos.  
+
+#### 4\. Creación del Volumen Lógico
+
+Creamos la partición donde vivirán los datos. Usaremos 6GB, dejando 4GB libres.
+Dejamos 4GB libres Porque los Snapshots necesitan "espacio vacío" para guardar temporalmente los cambios mientras ocurre el backup.
+
+```bash
+sudo lvcreate -L 6G -n lv_mysql vg_datos
+```
+> Aquí definimos el tamaño real. Es como particionar, pero dinámico.  
+> `lvcreate` crea un volumen logico dentro de grupo de volumenes (VG)  
+> `-L 6G` indica el tamaño del volumen lógico: en este caso, 6 gigabytes.  
+> `-n lv_mysql` Le damos el nombre al volumen logico, en este caso le daremos el nombre de `lv_mysql`  
+> `vg_datos` Es el grupo de volumenes donde se va crear es LV, que lo hicimos antes usando `vgcreate`  
+> Basicamente este comando crea la tercera capa de la jerarquía LVM: un volumen lógico de 6GB llamado lv_mysql dentro del grupo vg_datos.  
+> Tercer nivel (LV): los volúmenes lógicos → como las habitaciones que construyes dentro de esa pared para usarlas
+
+Analogia de los ultimos 3 comandos:
+> PV (Physical Volume) = ladrillos.  
+> VG (Volume Group) = la pared construida con esos ladrillos.  
+> LV (Logical Volume) = la habitación que decides construir dentro de esa pared.  
+
+#### 5\. Formateo (El Sistema de Archivos)
+
+Damos formato ext4 al nuevo volumen.
+
+```bash
+sudo mkfs.ext4 /dev/vg_datos/lv_mysql
+```
+> `mkfs.ext4` Es la utilidad que crea un sistema de archivos ext4 en un volumen.  
+> `/dev/vg_datos/lv_mysql` es el volumen logico que creamos antes.  
+> Este comando da formato ext4 al volumen lógico, convirtiéndolo en un espacio listo para guardar datos. Sin este paso, el LV existiría, pero no podría almacenar archivos porque no tendría un sistema de archivos definido.  
+
+
+#### 6\. Migración de Datos (El Trasplante)
+
+Moveremos los datos existentes al nuevo disco sin perder nada.
+
+  * **A. Montaje temporal:**
+
+    ```bash
+    sudo mkdir -p /mnt/temp_migration
+    sudo mount /dev/vg_datos/lv_mysql /mnt/temp_migration
+    ```
+    > Crea la carpeta temp_migration  
+    > y Aquí conectas el volumen lógico (/dev/vg_datos/lv_mysql) a la carpeta /mnt/temp_migration, Es decir: /mnt/temp_migration ya apunta directamente al nuevo disco LVM.
+
+  * **B. Copia de datos (Con permisos intactos):**
+
+    ```bash
+    sudo cp -a /var/lib/mysql/. /mnt/temp_migration/
+    ```
+    > Copias los datos de la carpeta original de MySQL (/var/lib/mysql/) hacia el volumen lógico montado en /mnt/temp_migration.  
+    > La bandera -a asegura que se mantengan permisos, dueños y fechas. Esto es crucial para que MySQL funcione correctamente después de la migración.
+
+  * **C. Desmontar:**
+
+    ```bash
+    sudo umount /mnt/temp_migration
+    ```
+    Una vez copiados los datos, cierras esa “puerta temporal”. El volumen lógico ya contiene la base de datos y está listo para montarse en su ubicación definitiva (/var/lib/mysql).
+
+#### 7\. Montaje Definitivo
+
+Ahora montaremos el nuevo volumen LVM *encima* de la carpeta original de MariaDB.
+
+  * **A. Limpiar carpeta original (Opcional pero recomendado para no confundirse):**
+
+    ```bash
+    sudo rm -rf /var/lib/mysql/*
+    ```
+    > Se vacía la carpeta original de MySQL  
+    > En teoria si eliminamos esto la base de datos va a desaparecer, pero ya tenemos una copia de la base de dato en el volumen logico, asi que no pasa nada  
+    
+  * **B. Editar `/etc/fstab` (Persistencia):**
+
+    ```bash
+    sudo nano /etc/fstab
+    ```
+   Te vas hasta al final y agregas:
+   ```bash
+   /dev/vg_datos/lv_mysql   /var/lib/mysql   ext4   defaults   0   0
+   ```
+
+  * **C. Montar todo:**
+
+    ```bash
+    sudo mount -a
+    ```
+    > Aplica la configuración de /etc/fstab  
+    > El volumen lógico lv_mysql queda montado sobre /var/lib/mysql.  
+    > A partir de aquí, MariaDB ya trabaja directamente con el nuevo disco LVM.
+> En resumen, Se limpia la carpeta original,Se conecta el volumen lógico al lugar donde MariaDB espera sus archivos, Y se asegura que esa conexión sea automática en cada reinicio.
+  * **d. racargar configuracion:**
+
+    ```bash
+    sudo systemctl daemon-reload
+    ```
+    > Recarga la configuración, porque cambié archivos importantes como /etc/fstab.
+
+#### 8\. Verificar y Reactivar
+
+Verificamos que el disco esté montado y encendemos el motor.
+
+```bash
+df -h | grep mysql
+```
+> Debería decir: /dev/mapper/vg_datos-lv_mysql ... 6.0G ... /var/lib/mysql  
+> Muestra el uso de los discos, que son filtrados por tener la palabra "mysql", que en este caso es donde esta montado el volumen logico.
+
+```bash
+sudo systemctl start mariadb
+```
+> Enciende de nuevo mariadb
+
+-----
+
+### Prueba
+
+Vuelve al navegador de app-node, a http://app-node/index.php y deberia seguir la base de datos.
+
+
+
 
 
 
