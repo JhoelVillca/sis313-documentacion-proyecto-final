@@ -529,11 +529,12 @@ docker logs minio
 Ahora vamos a probar si la Bóveda es accesible desde fuera.
 
 1.  Abre el navegador en tu **Laptop Física**.
-2.  Escribe la dirección IP de Tailscale de la VM1 (la que pusimos en `/etc/hosts` como `minio-vault`):
-    `http://100.73.190.14:9001`
-    *(Reemplaza `100.73.190.14` con la IP real de tu VM1)*.
+2.  Navega a `http://minio-vault:9001`, devido al dns que configuramos deberia funcionar o tambien puedes escribir la dirección IP de Tailscale de la VM1 (la que pusimos en `/etc/hosts` como `minio-vault`):
+    `http://100.73.190.14:9001`.
 3.  Deberías ver la pantalla de login de MinIO.
-4.  Ingresa con `admin` y `SuperSecretKey123`.
+   ![Loggin de MinIO](Imagenes/MinIOLogin.png)
+5.  Ingresa con `admin` y `SuperSecretKey123`.
+   ![minio-vault_Dashboard1](Imagenes/minio-vault_Dashboard1.png)
 
 Si ves el dashboard rojo/rosado de MinIO, **Fase 3 Completada al 90%**.
 (Falta configurar el cliente `mc` para crear los buckets, que haremos en el siguiente paso).
