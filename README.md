@@ -89,7 +89,7 @@ En lugar de restaurar ciegamente la etiqueta `latest`, nuestro **Menú de Contro
 2.  El operador visualiza la línea de tiempo.
 3.  Se selecciona el punto de restauración *previo* al incidente (T-1 minuto).
 
-> **Resiliencia no es solo guardar datos, es saber qué versión de la verdad recuperar.**
+> **Resiliencia no es solo guardar datos, Tambien debemos saber a que version restaurar.**
 
 ***
 
@@ -158,8 +158,48 @@ nosotros para esta documentacion y el proyecto trabajeremos con:
 > En un entorno real se debe tener discrecion con las contraseñas  
 > En este caso usaremos estos datos, pero si se desea replicar se debe ajustar algunos comandos a sus datos.
 
-
 -----
+
+### Paso 5: agregar y verificar Discos en caso de que no se haya hecho aun. 
+Verificaremos si el sistema operativo reconoce los discos secundarios (`sdb`). Si no están, apagaremos las máquinas y los "enchufaremos" virtualmente.
+Confirmar que `minio-vault` tiene su bóveda de 20GB y `db-node` tiene su disco para snapshots de 10GB.
+
+1.  **Apagar Máquina:** `sudo poweroff` (en `minio-vault` y `db-node`).
+2.  **VirtualBox:**
+      * Selecciona la VM.
+      * Clic en **Configuración** \> **Almacenamiento**.
+      * Junto a "Controlador: SATA", clic en el icono de **"Añadir Disco Duro"**.
+        
+      * **Crear** \> **VDI** \> **Reservado dinámicamente**.
+      * **Tamaño:**
+          * Para `minio-vault`: **20 GB**.
+          * Para `db-node`: **10 GB**.
+      * **Aceptar**.
+3.  **Encender Máquina:** Inicia la VM de nuevo.
+4.  **Verificar:** Corre `lsblk`. Ahora debería aparecer `sdb`.
+
+> **Nota:** Aun no los vamos a formatearlos o montarlos todavía. De eso nos encargaremos en las fases de MinIO y LVM respectivamente.
+
+**Una observación sobre tu tabla:**
+Veo que le asignaste **1024 MB de RAM** a todas las máquinas.
+
+  * **Advertencia:** `minio-vault` (VM1) va a correr Docker + MinIO. Con 1GB de RAM va a estar apretado. Si tu laptop física tiene memoria de sobra, súbele a **2048 MB** a la VM1 ahora que estás reiniciando. Si no, déjalo en 1GB, pero no le pidas peras al olmo si va un poco lento.
+
+¿Confirmas que `lsblk` muestra los discos `sdb` en VM1 y VM3?
+Si es afirmativo, di **"Discos Listos"** y lanzamos la **Fase 2: La Bóveda**.
+
+
+------
+
+## Fase 2: Implementación de Red de Malla (Overlay Network)
+**Descripción:**
+Despliegue de una red privada virtual (VPN de malla) utilizando **Tailscale/ZeroTier**. Esto crea una capa de red abstracta sobre la infraestructura física, permitiendo que las máquinas se comuniquen de forma segura y encriptada sin depender de la configuración del router local (Wi-Fi de la feria o laboratorio).
+
+**Objetivo y Aporte:**
+* **Portabilidad Total:** El sistema funciona idénticamente en el laboratorio, en una feria pública o en Internet.
+* **Independencia de IP:** Uso de *MagicDNS* para resolver nombres (`db-node`, `app-node`) en lugar de depender de IPs estáticas frágiles.
+* **Seguridad:** Todo el tráfico entre nodos viaja cifrado, inmune a espionaje en redes públicas.
+
 
 ### Paso 3: Despliegue de la Red Overlay (Tailscale)
 Para trabajar este proyecto de forma remota usaremos Tailscale.
@@ -273,7 +313,7 @@ sudo nano /etc/hosts
 > Es el archivo que sirve para resolver nombres de dominio de manera Local  
 
 **3. Agregar DNS Locales**
-Al final del archivo, pega las 4 direcciones, con el formato de [ipv4]   [nombre de servidor]
+Al final del archivo, pega las 4 direcciones, con el formato de [ipv4]   [El nombre que le daremos a la ip, en muestro caso usaremos los nombres de los servidores]
 ```text
 100.73.190.14   minio-vault
 100.105.30.93   app-node
@@ -290,8 +330,6 @@ ping db-node -c 2
 si funciona, entonces esta bien, puedes volver a activar MagicDNS o no, como se desee.
 En caso de que por alguna razon cambien de direccion de red solo se debe ajustar en `/etc/hosts`
 
-
-
 -----
 
 ### En caso de que se requiera no usar Tailscale, o el internet se corta.
@@ -304,67 +342,6 @@ En ese caso seguiremos esto para poder trabajar sin internet ni Tailscale, y se 
 4.  **Actualizar Hosts:** Entras a `/etc/hosts` de nuevo y cambias las IPs `100.x` por las nuevas `192.168.x`.
 5.  **Resultado:** Esto deberia permitir la coneccion entre los servidores, sin tener que ajustar todos los script (razon por la que usamos DNS).
 
------
-
-### Paso 5: agregar y verificar Discos en caso de que no se haya hecho aun. 
-Verificaremos si el sistema operativo reconoce los discos secundarios (`sdb`). Si no están, apagaremos las máquinas y los "enchufaremos" virtualmente.
-Confirmar que `minio-vault` tiene su bóveda de 20GB y `db-node` tiene su disco para snapshots de 10GB.
-
-1.  **Apagar Máquina:** `sudo poweroff` (en `minio-vault` y `db-node`).
-2.  **VirtualBox:**
-      * Selecciona la VM.
-      * Clic en **Configuración** \> **Almacenamiento**.
-      * Junto a "Controlador: SATA", clic en el icono de **"Añadir Disco Duro"**.
-        
-      * **Crear** \> **VDI** \> **Reservado dinámicamente**.
-      * **Tamaño:**
-          * Para `minio-vault`: **20 GB**.
-          * Para `db-node`: **10 GB**.
-      * **Aceptar**.
-3.  **Encender Máquina:** Inicia la VM de nuevo.
-4.  **Verificar:** Corre `lsblk`. Ahora debería aparecer `sdb`.
-
-> **Nota:** Aun no los vamos a formatearlos o montarlos todavía. De eso nos encargaremos en las fases de MinIO y LVM respectivamente.
-
-**Una observación sobre tu tabla:**
-Veo que le asignaste **1024 MB de RAM** a todas las máquinas.
-
-  * **Advertencia:** `minio-vault` (VM1) va a correr Docker + MinIO. Con 1GB de RAM va a estar apretado. Si tu laptop física tiene memoria de sobra, súbele a **2048 MB** a la VM1 ahora que estás reiniciando. Si no, déjalo en 1GB, pero no le pidas peras al olmo si va un poco lento.
-
-¿Confirmas que `lsblk` muestra los discos `sdb` en VM1 y VM3?
-Si es afirmativo, di **"Discos Listos"** y lanzamos la **Fase 2: La Bóveda**.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Fase 2: Implementación de Red de Malla (Overlay Network)
-**Descripción:**
-Despliegue de una red privada virtual (VPN de malla) utilizando **Tailscale/ZeroTier**. Esto crea una capa de red abstracta sobre la infraestructura física, permitiendo que las máquinas se comuniquen de forma segura y encriptada sin depender de la configuración del router local (Wi-Fi de la feria o laboratorio).
-
-**Objetivo y Aporte:**
-* **Portabilidad Total:** El sistema funciona idénticamente en el laboratorio, en una feria pública o en Internet.
-* **Independencia de IP:** Uso de *MagicDNS* para resolver nombres (`db-node`, `app-node`) en lugar de depender de IPs estáticas frágiles.
-* **Seguridad:** Todo el tráfico entre nodos viaja cifrado, inmune a espionaje en redes públicas.
 
 -----
 
@@ -376,6 +353,225 @@ Instalación y configuración de **MinIO** (compatible con Amazon S3) en un ento
 * Crear un repositorio centralizado y desacoplado para los backups.
 * Simular una arquitectura de nube real (Cloud-Native) en un entorno local.
 * Garantizar que si los servidores de aplicación son destruidos, los datos de respaldo permanezcan intactos en un "búnker" aislado.
+
+
+-----
+
+### Paso 1: Preparación del Almacenamiento Físico (minio-vault)
+
+**Ubicación:** Ejecutar EXCLUSIVAMENTE en **La maquina `minio-vault`**.
+**Objetivo:** Formatear el disco extra de 20GB (`/dev/sdb`) y montarlo permanentemente en `/mnt/data`. Esto garantiza que los backups vivan en un disco separado del sistema operativo.
+
+#### 1\. Identificar el disco agregado
+
+Verificamos que el sistema detecte el disco de 20GB.
+
+```bash
+lsblk
+```
+
+> Esto Lista los dispositivos de bloque. Deberías ver `sdb` con 20G de tamaño y sin particiones, si es asi esta bien.
+
+#### 2\. Formatear el disco (Crear sistema de archivos)
+
+Le daremos formato **ext4**, el estándar de Linux.
+
+```bash
+sudo mkfs.ext4 /dev/sdb
+```
+
+> `mkfs`  convierte el disco bruto en algo donde se pueden guardar archivos.
+> `ext4` es el estándar actual y soporta discos grandes, journaling avanzado, menos fragmentación, existen otras opciones como ext2, ext3, XFS, Btrfs y ZFS.
+> Basicamente dice formatea el disco /dev/sdb y prepáralo para guardar archivos usando el sistema de archivos ext4.
+ 
+#### 3\. Crear el punto de montaje
+
+Creamos la carpeta donde "enchufaremos" este disco.
+
+```bash
+sudo mkdir -p /mnt/data
+```
+> mkdir crea un directorio, -p lo usamos por si ese directorio ya existe, entonces crea lo que falta, /mnt/data es el directorio.
+> **Explicación:** `/mnt/data` será la puerta de entrada. Todo lo que guardemos aquí irá físicamente al disco de 20GB.
+> Basicamente dice Crea la carpeta llamada data dentro del directorio /mnt. Si ya existe, no pasa nada.
+
+#### 4\. Montaje manual (Prueba)
+
+Conectamos el disco a la carpeta.
+
+```bash
+sudo mount /dev/sdb /mnt/data
+```
+> mount sirve para conectar un dispositivo de almacenamiento a un directorio. en este caso conecta el disco `/dev/sdb` al directorio `/mnt/data`.
+> **Explicación:** Enlaza el dispositivo físico `/dev/sdb` con el directorio `/mnt/data`.
+
+#### 5\. Montaje persistente (Para reinicios)
+
+Si reinicias ahora, el disco se desconectará. necesitamos que se monte el disco solito cada vez que lo reiniciamos, Editamos `/etc/fstab` para que se monte solo al arrancar.
+
+```bash
+sudo nano /etc/fstab
+```
+> Ese es el archivo de montajes automaticos.
+Al final del archivo agregamos:
+```bash
+/dev/sdb   /mnt/data   ext4   defaults   0   0
+```
+> /dev/sdb es el disco.
+> /mnt/data es el directorio o el punto de montaje.
+> ext4 es el sistema de archivos.
+> 0 0 es para no usar dump y no revisar automáticamente este disco con fsck al arrancar, el primero desactiva copias automaticas con dump, y el segundo 0 desactiva el chequeo automatico con fsck, fsck sirve para chequear y reparar el sistema de archivos, no lo usamos por que es lento, tarda unos minutos en revisar un disco grande.
+> **Explicación:** Escribe una línea en la "tabla de sistemas de archivos" (`fstab`) instruyendo al kernel que monte `sdb` en `/mnt/data` en cada arranque.
+
+#### 6\. Asignar permisos para MinIO
+
+MinIO es un software seguro y no corre como "root". Corre con el usuario ID `1001`. Debemos regalarle esta carpeta a ese ID para que pueda escribir en ella.
+
+```bash
+sudo chown -R 1001:1001 /mnt/data
+```
+> chown -> cambiar porpiertario.
+> -R para seleccionar la carpeta y sus subcarpetas y archivos.
+> 1001:1001 quien sera nuestro nuevo propietario esta con el formato de Usuario:Grupo, 1001 es el UID de MinIO
+> **Explicación:** `chown` (Change Owner) cambia el dueño de la carpeta. `1001:1001` es el Usuario:Grupo que usará el contenedor Docker de MinIO.
+> si bien aun no tenemos instalado aun minIO, lo ponemos para que cuando usemos minio ya pueda escribir en esa carpeta.
+-----
+
+**Verificación:**
+Ejecuta `df -h | grep /mnt/data`.
+> df -> muestra el espacio libre.  
+> -h convierte los tamanios a KB, MB, GB para que sea facil leer.  
+> grep /mnt/data filtra la salida y muestra solo las líneas que contienen /mnt/data.  
+> basicamente dice Muéstrame el espacio disponible y usado en el disco que está montado en /mnt/data
+Deberías ver una línea que dice `Size: 20G` (aprox).
+
+-----  
+
+### Paso 2: Despliegue del Motor (Docker + MinIO)
+
+**Ubicación:** Ejecutar EXCLUSIVAMENTE en **VM1 (`minio-vault`)**.
+**Objetivo:** Instalar el motor de contenedores Docker y desplegar la instancia de MinIO conectada al almacenamiento físico que preparamos en el paso anterior.
+
+#### 1\. Instalación de Docker
+
+Usaremos la versión mantenida por los repositorios oficiales de Ubuntu (`docker.io`) por su estabilidad y facilidad de instalación.
+
+```bash
+sudo apt update && sudo apt install docker.io -y
+```
+
+> **Explicación:** Actualiza la lista de paquetes para asegurarnos de bajar la última versión disponible e instala el motor de Docker. La bandera `-y` responde "Yes" automáticamente a las preguntas de confirmación.
+
+#### 2\. Permisos de Usuario (Evitar `sudo` constante)
+
+Por defecto, Docker solo obedece al usuario `root`. Para que nuestro usuario (`admin-vault` o el que estés usando) pueda dar órdenes sin escribir `sudo` a cada rato, lo agregamos al grupo privilegiado.
+
+```bash
+sudo usermod -aG docker $USER
+```
+> `usermod`: Modificar las configuraciones de un usuario.  
+> `-aG`: **A**ppend (Agregar) al **G**rupo.  
+> `docker`: El nombre del grupo especial.  
+> `$USER`: Variable de entorno que se reemplaza automáticamente por tu usuario actual.  
+> Basicamente dice Que agregue a nuestro usuario al grupo de personas que tienen el control total de docker, por defecto biene que solo sea el usuario root, pero con esto el usuario actual tendra tambien los permisos.
+
+
+** Acción necesaria:** Para que este cambio surta efecto, debes **cerrar sesión y volver a entrar** (logout/login) o ejecutar, si es por ssh con exit y luego volver a entrar:
+
+```bash
+newgrp docker
+```
+
+#### 3\. Despliegue del Contenedor MinIO
+
+Este es el comando principal que levanta el servidor. Copia y pega el bloque completo.
+
+```bash
+docker run -dt \
+  -p 9000:9000 -p 9001:9001 \
+  --name minio \
+  --restart always \
+  -v /mnt/data:/data \
+  -e "MINIO_ROOT_USER=admin" \
+  -e "MINIO_ROOT_PASSWORD=SuperSecretKey123" \
+  minio/minio server /data --console-address ":9001"
+```
+
+> **Explicacion del Comando:**
+>  
+> `docker run -dt`: Crea e inicia un contenedor en modo **d**etached (segundo plano) y asigna una **t**ty (terminal virtual).  
+> `-p 9000:9000`: Expone el puerto API (donde se envían los datos).  
+> `-p 9001:9001`: Expone el puerto de la Consola Web (donde tú ves los archivos).
+> `--name minio`: Es el nombre que le daremos al contenedor "minio".  
+> `--restart always`: Para que docker arracara solo. Si el servidor se apaga por corte de luz o error, Docker revivirá este servicio automáticamente al arrancar.  
+> `-v /mnt/data:/data`: Conecta nuestra carpeta del disco duro físico (`/mnt/data`) con la carpeta interna del contenedor (`/data`). Si borras el contenedor, los datos siguen seguros en el disco.  
+> `-e -e "MINIO_ROOT_USER=admin"` y `-e "MINIO_ROOT_PASSWORD=SuperSecretKey123"
+`: Definimos la clave y el usuario, en un entorno real se debe usar claves mas complejas.  
+> `minio/minio server /data`: La imagen a usar y Arranca en modo servidor y usa la carpeta /data como almacenamiento principal.
+> Basicamente dice Arranca un contenedor Docker con MinIO, en segundo plano, expone los puertos 9000 y 9001, lo nombra minio, asegura que se reinicie solo si el servidor se apaga, guarda los datos en la carpeta /mnt/data del host, define el usuario y contraseña iniciales, y habilita la consola web en el puerto 9001 
+
+#### 4\. Verificación de Estado
+
+Confirmamos que el "banco" abrió sus puertas.
+
+```bash
+docker logs minio
+```
+> muestra los logs del contenedor llamado minio
+
+> **Resultado Esperado:** Deberías ver un logo ASCII de MinIO y textos que dicen `API: http://...:9000` y `WebUI: http://...:9001`.
+> **Nota de Seguridad:** Verás una advertencia en amarillo sobre la contraseña y el usuario por defecto. En producción esto es grave; en nuestra demo, es aceptable, pero menciónalo si te preguntan.
+
+-----
+
+### Prueba desde el navegador
+
+Ahora vamos a probar si la Bóveda es accesible desde fuera.
+
+1.  Abre el navegador en tu **Laptop Física**.
+2.  Escribe la dirección IP de Tailscale de la VM1 (la que pusimos en `/etc/hosts` como `minio-vault`):
+    `http://100.73.190.14:9001`
+    *(Reemplaza `100.73.190.14` con la IP real de tu VM1)*.
+3.  Deberías ver la pantalla de login de MinIO.
+4.  Ingresa con `admin` y `SuperSecretKey123`.
+
+Si ves el dashboard rojo/rosado de MinIO, **Fase 3 Completada al 90%**.
+(Falta configurar el cliente `mc` para crear los buckets, que haremos en el siguiente paso).
+
+¿Lograste entrar a la consola web? Di **"MinIO Operativo"**.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -----
 
