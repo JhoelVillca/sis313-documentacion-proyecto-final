@@ -778,31 +778,32 @@ Pega este código que sera la interfaz que se vea desde fuera:
 ```php
 <?php
 // --- CONFIGURACIÓN DE CONEXIÓN ---
-$servername = "db-node"; // Hostname gracias a /etc/hosts
+$servername = "db-node";
 $username = "app_user";
 $password = "SecretAppPass";
 $dbname = "financiera";
 
 // Crear conexión
 $conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) { die("Conexión fallida: " . $conn->connect_error); }
+if ($conn->connect_error) { die("Error de conexión: " . $conn->connect_error); }
 
 // --- LÓGICA DE NEGOCIO (BACKEND) ---
 
-// 1. CREATE (Insertar nueva cuenta)
-if (isset($_POST['crear'])) {
+// 1. CREATE (Solo Insertar)
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['crear'])) {
     $titular = $conn->real_escape_string($_POST['titular']);
     $cuenta = $conn->real_escape_string($_POST['cuenta']);
     $saldo = floatval($_POST['saldo']);
     
     $sql = "INSERT INTO cuentas (titular, cuenta_numero, saldo) VALUES ('$titular', '$cuenta', $saldo)";
-    $conn->query($sql);
-    // Redirigir para evitar re-envío del formulario al actualizar
-    header("Location: index.php"); 
-    exit();
+    
+    if ($conn->query($sql)) {
+        header("Location: index.php");
+        exit();
+    }
 }
 
-// 2. DELETE (Borrar una cuenta específica)
+// 2. DELETE (Borrar)
 if (isset($_GET['borrar'])) {
     $id = intval($_GET['borrar']);
     $sql = "DELETE FROM cuentas WHERE id=$id";
@@ -811,80 +812,270 @@ if (isset($_GET['borrar'])) {
     exit();
 }
 
-// 3. READ (Leer datos para la tabla)
+// 3. READ (Leer datos)
 $sql = "SELECT * FROM cuentas ORDER BY id DESC";
 $result = $conn->query($sql);
 ?>
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Banco Fénix - Panel de Control</title>
+    <title>Banco Fénix - Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e2e; color: #cdd6f4; text-align: center; padding: 20px; }
-        h1 { color: #89b4fa; }
-        
-        /* Estilos del Formulario (Create) */
-        .form-box { background-color: #313244; padding: 20px; margin: 0 auto 30px auto; width: 90%; max-width: 500px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        input { padding: 10px; margin: 5px; border-radius: 5px; border: none; width: 70%; }
-        button { padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; }
-        .btn-green { background-color: #a6e3a1; color: #1e1e2e; }
-        .btn-green:hover { background-color: #94e2d5; }
+        /* --- CONFIGURACIÓN DE VARIABLES DE COLOR (TEMAS) --- */
+        :root {
+            /* TEMA CLARO (Default) */
+            --bg-body: #f1f5f9;       /* Gris muy claro */
+            --bg-card: #ffffff;       /* Blanco puro */
+            --bg-input: #ffffff;
+            --text-primary: #1e293b;  /* Gris oscuro casi negro */
+            --text-secondary: #64748b;/* Gris medio */
+            --accent-color: #4f46e5;  /* Indigo profesional */
+            --accent-hover: #4338ca;
+            --border-color: #e2e8f0;
+            --table-header: #f8fafc;
+            --table-row-hover: #f1f5f9;
+            --danger-color: #ef4444;  /* Rojo moderno */
+            --danger-hover: #dc2626;
+            --badge-bg: #dcfce7;
+            --badge-text: #166534;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
 
-        /* Estilos de la Tabla (Read) */
-        table { margin: 0 auto; border-collapse: collapse; width: 95%; max-width: 800px; background-color: #181825; }
-        th, td { padding: 12px; border-bottom: 1px solid #45475a; }
-        th { background-color: #11111b; color: #f5c2e7; }
-        tr:hover { background-color: #313244; }
-        .saldo { color: #a6e3a1; font-family: monospace; font-size: 1.1em; }
+        [data-theme="dark"] {
+            /* TEMA OSCURO */
+            --bg-body: #0f172a;       /* Slate 900 */
+            --bg-card: #1e293b;       /* Slate 800 */
+            --bg-input: #334155;      /* Slate 700 */
+            --text-primary: #f8fafc;  /* Blanco casi puro */
+            --text-secondary: #94a3b8;/* Gris azulado claro */
+            --accent-color: #6366f1;  /* Indigo más brillante para contraste */
+            --accent-hover: #818cf8;
+            --border-color: #334155;
+            --table-header: #1e293b;
+            --table-row-hover: #334155;
+            --danger-color: #f87171;  /* Rojo suave */
+            --danger-hover: #ef4444;
+            --badge-bg: #14532d;      /* Verde oscuro */
+            --badge-text: #bbf7d0;    /* Verde claro */
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- ESTILOS GENERALES --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: background-color 0.3s ease, color 0.3s ease; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Header y Botón Tema */
+        .header {
+            padding: 30px 40px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.5px; }
+        .header p { color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px; }
+
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .theme-toggle:hover { background-color: var(--table-row-hover); }
+
+        /* Formulario */
+        .form-section { padding: 30px 40px; border-bottom: 1px solid var(--border-color); }
+        .form-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; color: var(--accent-color); }
+
+        .input-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
         
-        /* Botón de Borrar (Delete) */
-        .btn-red { background-color: #f38ba8; color: #1e1e2e; text-decoration: none; padding: 5px 10px; border-radius: 3px; font-size: 0.8em; }
-        .btn-red:hover { background-color: #eba0ac; }
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            outline: none;
+        }
+        input:focus { border-color: var(--accent-color); ring: 2px solid var(--accent-color); }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+        }
+        .btn-primary:hover { background-color: var(--accent-hover); }
+
+        /* Tabla */
+        .table-section { padding: 0; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        
+        th {
+            background-color: var(--table-header);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            padding: 16px 24px;
+            letter-spacing: 0.5px;
+        }
+        
+        td { padding: 16px 24px; border-bottom: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.95rem; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: var(--table-row-hover); }
+
+        .money-badge {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Botón Eliminar pequeño */
+        .btn-delete {
+            background-color: transparent;
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-delete:hover {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
     </style>
 </head>
 <body>
 
-    <h1>🏦 BANCO FÉNIX - GESTIÓN DE ACTIVOS</h1>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>Banco Fénix</h1>
+                <p>Panel de Gestión de Activos</p>
+            </div>
+            <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">Modo Noche</button>
+        </div>
 
-    <div class="form-box">
-        <h3>💰 Ingresar Nuevo Capital</h3>
-        <form method="POST" action="index.php">
-            <input type="text" name="titular" placeholder="Nombre del Titular" required><br>
-            <input type="text" name="cuenta" placeholder="Nro. Cuenta (Ej: CTA-999)" required><br>
-            <input type="number" step="0.01" name="saldo" placeholder="Saldo Inicial ($)" required><br>
-            <br>
-            <button type="submit" name="crear" class="btn-green">GUARDAR REGISTRO</button>
-        </form>
+        <div class="form-section">
+            <h2 class="form-title">Ingresar Nuevo Capital</h2>
+            <form method="POST" action="index.php">
+                <div class="input-group">
+                    <input type="text" name="titular" placeholder="Nombre del Titular" required>
+                    <input type="text" name="cuenta" placeholder="Nro. Cuenta" required>
+                    <input type="number" step="0.01" name="saldo" placeholder="Saldo Inicial" required>
+                </div>
+                <button type="submit" name="crear" class="btn-primary">Guardar Registro</button>
+            </form>
+        </div>
+
+        <div class="table-section">
+            <?php if ($result->num_rows > 0): ?>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Titular</th>
+                            <th>Cuenta</th>
+                            <th>Saldo</th>
+                            <th style="text-align: right;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while($row = $result->fetch_assoc()): ?>
+                        <tr>
+                            <td style="color: var(--text-secondary);">#<?php echo str_pad($row["id"], 3, '0', STR_PAD_LEFT); ?></td>
+                            <td><?php echo $row["titular"]; ?></td>
+                            <td><?php echo $row["cuenta_numero"]; ?></td>
+                            <td class="money-badge">$ <?php echo number_format($row["saldo"], 2); ?></td>
+                            <td style="text-align: right;">
+                                <a href="index.php?borrar=<?php echo $row['id']; ?>" 
+                                   class="btn-delete" 
+                                   onclick="return confirm('¿Está seguro de eliminar este registro?');">
+                                   Eliminar
+                                </a>
+                            </td>
+                        </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <div class="empty-state">
+                    <h3>No hay registros</h3>
+                    <p>La base de datos está vacía actualmente.</p>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
 
-    <?php if ($result->num_rows > 0): ?>
-        <table>
-            <tr>
-                <th>ID</th>
-                <th>TITULAR</th>
-                <th>CUENTA</th>
-                <th>SALDO</th>
-                <th>ACCIÓN</th>
-            </tr>
-            <?php while($row = $result->fetch_assoc()): ?>
-            <tr>
-                <td><?php echo $row["id"]; ?></td>
-                <td><?php echo $row["titular"]; ?></td>
-                <td><?php echo $row["cuenta_numero"]; ?></td>
-                <td class="saldo">$ <?php echo number_format($row["saldo"], 2); ?></td>
-                <td>
-                    <a href="index.php?borrar=<?php echo $row['id']; ?>" class="btn-red" onclick="return confirm('¿Confiscar fondos de <?php echo $row['titular']; ?>?');">ELIMINAR</a>
-                </td>
-            </tr>
-            <?php endwhile; ?>
-        </table>
-    <?php else: ?>
-        <h2 style="color: #f38ba8;">⚠️ BASE DE DATOS VACÍA ⚠️</h2>
-        <p>El sistema ha sido purgado o es un inicio fresco.</p>
-    <?php endif; ?>
+    <script>
+        // Lógica para cambiar tema (Día/Noche)
+        const htmlElement = document.documentElement;
+        const themeBtn = document.getElementById('themeBtn');
+
+        // 1. Revisar si hay preferencia guardada
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            htmlElement.setAttribute('data-theme', savedTheme);
+            updateButtonText(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateButtonText(newTheme);
+        }
+
+        function updateButtonText(theme) {
+            if (theme === 'dark') {
+                themeBtn.textContent = "Modo Día";
+            } else {
+                themeBtn.textContent = "Modo Noche";
+            }
+        }
+    </script>
 
 </body>
 </html>
