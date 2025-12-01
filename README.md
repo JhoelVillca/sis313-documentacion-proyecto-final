@@ -627,44 +627,295 @@ mc ls mi-boveda
 > Deveria aparecer `backup-repo/` en la terminal.
 tambien lo puedes verificar entrando a `http://minio-vault:9000` , despues de iniciar secion deveria aparecer el bucket en el dashboard.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 -----
 
-## Fase 4: Configuración de Servicios Críticos (Las Víctimas)
-**Descripción:**
+## Fase 4: Configuración de Servicios Críticos
 Puesta en marcha de los servicios que simulan la operación del negocio:
 1.  **Servidor Web (App Node):** Nginx/Apache sirviendo una aplicación de demostración.
 2.  **Base de Datos (DB Node):** MariaDB configurada para transacciones.
-3.  **Acceso Público:** Configuración de *Port Forwarding* para permitir acceso desde dispositivos externos (móviles de la audiencia).
+3.  **Acceso Público:** Configuración de *Port Forwarding* para permitir acceso desde dispositivos externos.
 
 **Objetivo y Aporte:**
 * Proveer los activos de información que serán protegidos.
 * Demostrar la accesibilidad del servicio para el usuario final antes del "desastre".
+
+
+-----
+
+### Paso 1: Preparación de la Base de Datos
+
+**Ubicación:** Ejecutar en **VM encargado de la base de datos (`db-node`)**.
+**Objetivo:** Instalar MariaDB, permitir conexiones remotas (para que la Web App entre) y crear los datos ficticios.
+
+#### 1\. Instalación del Motor
+
+MariaDB sera lo que usaremos.
+
+```bash
+sudo apt update && sudo apt install mariadb-server -y
+```
+> este comando actualiza la lista de paquetes y luego instala MariaDB Server automáticamente en tu sistema Linux
+
+#### 2\. Configuración de Red
+
+Por defecto, las bases de datos solo escuchan en `127.0.0.1` (localhost). Si no cambiamos esto, la VM2 (Web) nunca podrá conectarse.
+Edita el archivo de configuración:
+
+```bash
+sudo nano /etc/mysql/mariadb.conf.d/50-server.cnf
+```
+> Ese es el archivo de configuracion de MariaDB.
+
+Busca la línea que dice `bind-address = 127.0.0.1` y cámbiala por:
+
+```ini
+bind-address = 0.0.0.0
+```
+> **Traducción:** "No escuches solo a ti mismo (127.0.0.1). Escucha a cualquiera que llegue por la red", esto no lo convierte en vulnerable ya que filtraremos por usuario.
+Guarda (`Ctrl+O`), `enter` y Sal (`Ctrl+X`).
+Reinicia el servicio para aplicar el cambio:
+
+```bash
+sudo systemctl restart mariadb
+```
+
+#### 3\. Creación de la Estructura para la inyeccion de datos
+
+Vamos a entrar a la consola SQL y crear el usuario, la base y la tabla.
+
+Entra como root:
+
+```bash
+sudo mysql
+```
+
+Copia y pega este bloque SQL completo en la consola de MariaDB:
+
+```sql
+CREATE DATABASE financiera;
+
+CREATE USER 'app_user'@'%' IDENTIFIED BY 'SecretAppPass';
+GRANT ALL PRIVILEGES ON financiera.* TO 'app_user'@'%';
+FLUSH PRIVILEGES;
+
+USE financiera;
+CREATE TABLE cuentas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titular VARCHAR(100) NOT NULL,
+    cuenta_numero VARCHAR(20) UNIQUE,
+    saldo DECIMAL(15, 2) NOT NULL,
+    ultima_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO cuentas (titular, cuenta_numero, saldo) VALUES 
+('Tony Stark', 'CTA-200001', 10000000.00),   
+('Bruce Wayne', 'CTA-200002', 7500000.00),   
+('Daenerys Targaryen', 'CTA-200003', 500000.00), 
+('Rumpelstiltskin', 'CTA-200004', 25000.50); 
+
+SELECT * FROM cuentas;
+```
+
+Si ves la tabla con los millones, escribe `exit` para salir.
+
+> `CREATE DATABASE financiera;` Crea una base de datos llamada **`financiera`**, Es el espacio lógico donde se almacenarán las tablas y datos.  
+
+> `CREATE USER 'app_user'@'%' IDENTIFIED BY 'SecretAppPass';` Crea un usuario llamado **`app_user`** con contraseña **`SecretAppPass`**, El `@'%'` significa que puede conectarse desde cualquier IP (útil para acceso remoto).  
+
+> `GRANT ALL PRIVILEGES ON financiera.* TO 'app_user'@'%';` Concede todos los privilegios sobre la base de datos `financiera` y sus tablas al usuario `app_user`, Así la aplicación puede crear, leer, modificar y borrar datos en esa base.  
+
+> `FLUSH PRIVILEGES;` Recarga los permisos en MariaDB/MySQL para que los cambios tengan efecto inmediato, Sin esto, a veces los nuevos usuarios o privilegios no se aplican hasta reiniciar.  
+
+
+> `USE financiera;` Selecciona la base de datos `financiera` para trabajar dentro de ella, A partir de aquí, cualquier tabla creada o consulta se hace en esa base.
+
+> `CREATE TABLE cuentas (...);` Crea la tabla **`cuentas`** con las siguientes columnas:
+> - `id` → clave primaria, autoincremental.  
+> - `titular` → nombre del dueño de la cuenta.  
+> - `cuenta_numero` → número único de cuenta.  
+> - `saldo` → cantidad de dinero (decimal con 2 decimales).  
+> - `ultima_modificacion` → fecha/hora de la última actualización (por defecto la actual).  
+>   
+> `INSERT INTO cuentas (...) VALUES (...);` Inserta registros de ejemplo en la tabla  
+
+> `SELECT * FROM cuentas;` Consulta todos los registros de la tabla `cuentas`.deberias ver los datos insertados, incluyendo los millones de saldo.  
+
+-----
+
+### Paso 2: La Interfaz Visual (Web Server)
+
+**Ubicación:** Ejecutar en **En el servidor encargado de `app-node`**.
+**Objetivo:** Instalar Apache y PHP. Crear un script que se conecte a la DB y muestre la tabla.
+
+#### 1\. Instalación del Stack Web
+
+Necesitamos Apache (Servidor) y el módulo PHP-MySQL (el traductor entre la web y la base de datos).
+
+```bash
+sudo apt update && sudo apt install apache2 php libapache2-mod-php php-mysql -y
+```
+> El comando instala Apache, PHP y el conector con MariaDB, creando el entorno necesario para la aplicación web.  
+> apache2 → el servidor web Apache. php → el lenguaje PHP para generar páginas dinámicas. libapache2-mod-php → módulo que conecta Apache con PHP (para que Apache pueda interpretar archivos .php). php-mysql → extensión que permite a PHP conectarse con bases de datos MySQL/MariaDB.
+
+#### 2\. El Código Fuente (index.php)
+
+Vamos a reemplazar la página por defecto de Apache con nuestro tablero financiero.
+
+Borra el archivo:
+
+```bash
+sudo rm /var/www/html/index.html
+```
+
+Crea el nuevo sistema:
+
+```bash
+sudo nano /var/www/html/index.php
+```
+
+Pega este código que sera la interfaz que se vea desde fuera:
+
+```php
+<?php
+// --- CONFIGURACIÓN DE CONEXIÓN ---
+$servername = "db-node"; // Hostname gracias a /etc/hosts
+$username = "app_user";
+$password = "SecretAppPass";
+$dbname = "financiera";
+
+// Crear conexión
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) { die("Conexión fallida: " . $conn->connect_error); }
+
+// --- LÓGICA DE NEGOCIO (BACKEND) ---
+
+// 1. CREATE (Insertar nueva cuenta)
+if (isset($_POST['crear'])) {
+    $titular = $conn->real_escape_string($_POST['titular']);
+    $cuenta = $conn->real_escape_string($_POST['cuenta']);
+    $saldo = floatval($_POST['saldo']);
+    
+    $sql = "INSERT INTO cuentas (titular, cuenta_numero, saldo) VALUES ('$titular', '$cuenta', $saldo)";
+    $conn->query($sql);
+    // Redirigir para evitar re-envío del formulario al actualizar
+    header("Location: index.php"); 
+    exit();
+}
+
+// 2. DELETE (Borrar una cuenta específica)
+if (isset($_GET['borrar'])) {
+    $id = intval($_GET['borrar']);
+    $sql = "DELETE FROM cuentas WHERE id=$id";
+    $conn->query($sql);
+    header("Location: index.php");
+    exit();
+}
+
+// 3. READ (Leer datos para la tabla)
+$sql = "SELECT * FROM cuentas ORDER BY id DESC";
+$result = $conn->query($sql);
+?>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banco Fénix - Panel de Control</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e2e; color: #cdd6f4; text-align: center; padding: 20px; }
+        h1 { color: #89b4fa; }
+        
+        /* Estilos del Formulario (Create) */
+        .form-box { background-color: #313244; padding: 20px; margin: 0 auto 30px auto; width: 90%; max-width: 500px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        input { padding: 10px; margin: 5px; border-radius: 5px; border: none; width: 70%; }
+        button { padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-green { background-color: #a6e3a1; color: #1e1e2e; }
+        .btn-green:hover { background-color: #94e2d5; }
+
+        /* Estilos de la Tabla (Read) */
+        table { margin: 0 auto; border-collapse: collapse; width: 95%; max-width: 800px; background-color: #181825; }
+        th, td { padding: 12px; border-bottom: 1px solid #45475a; }
+        th { background-color: #11111b; color: #f5c2e7; }
+        tr:hover { background-color: #313244; }
+        .saldo { color: #a6e3a1; font-family: monospace; font-size: 1.1em; }
+        
+        /* Botón de Borrar (Delete) */
+        .btn-red { background-color: #f38ba8; color: #1e1e2e; text-decoration: none; padding: 5px 10px; border-radius: 3px; font-size: 0.8em; }
+        .btn-red:hover { background-color: #eba0ac; }
+    </style>
+</head>
+<body>
+
+    <h1>🏦 BANCO FÉNIX - GESTIÓN DE ACTIVOS</h1>
+
+    <div class="form-box">
+        <h3>💰 Ingresar Nuevo Capital</h3>
+        <form method="POST" action="index.php">
+            <input type="text" name="titular" placeholder="Nombre del Titular" required><br>
+            <input type="text" name="cuenta" placeholder="Nro. Cuenta (Ej: CTA-999)" required><br>
+            <input type="number" step="0.01" name="saldo" placeholder="Saldo Inicial ($)" required><br>
+            <br>
+            <button type="submit" name="crear" class="btn-green">GUARDAR REGISTRO</button>
+        </form>
+    </div>
+
+    <?php if ($result->num_rows > 0): ?>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>TITULAR</th>
+                <th>CUENTA</th>
+                <th>SALDO</th>
+                <th>ACCIÓN</th>
+            </tr>
+            <?php while($row = $result->fetch_assoc()): ?>
+            <tr>
+                <td><?php echo $row["id"]; ?></td>
+                <td><?php echo $row["titular"]; ?></td>
+                <td><?php echo $row["cuenta_numero"]; ?></td>
+                <td class="saldo">$ <?php echo number_format($row["saldo"], 2); ?></td>
+                <td>
+                    <a href="index.php?borrar=<?php echo $row['id']; ?>" class="btn-red" onclick="return confirm('¿Confiscar fondos de <?php echo $row['titular']; ?>?');">ELIMINAR</a>
+                </td>
+            </tr>
+            <?php endwhile; ?>
+        </table>
+    <?php else: ?>
+        <h2 style="color: #f38ba8;">⚠️ BASE DE DATOS VACÍA ⚠️</h2>
+        <p>El sistema ha sido purgado o es un inicio fresco.</p>
+    <?php endif; ?>
+
+</body>
+</html>
+<?php $conn->close(); ?>
+```
+
+-----
+
+### Paso 3: Acceso Público (Port Forwarding)
+
+para permitir que alguien conectado al Wi-Fi de la feria entre a tu página web usando la IP.
+
+1.  Abrimos **VirtualBox**.
+2.  Selecciona la **VM`app-node`** -\> **Configuración**.
+3.  **Red** -\> **Adaptador 1** (NAT).
+4.  **Avanzadas** -\> **Reenvío de puertos**.
+5.  Añadir regla (+):
+      * **Nombre:** WebDemo
+      * **Protocolo:** TCP
+      * **IP Anfitrión:** `0.0.0.0` (O dejar vacío)
+      * **Puerto Anfitrión:** `8080`.
+      * **IP Invitado:** (Dejar vacío).
+      * **Puerto Invitado:** `80` (El puerto de Apache en la VM).
+
+**Prueba**
+
+1.  En la maquina host, abre cualquier navegador y entra a: `http://localhost:8080`.
+2.  Deberías ver la tabla.
+3.  Si estás en el mismo Wi-Fi con tu celular, averigua la IP del host(la laptop o computadora) usando `ipconfig` en Windows o `ip addr` en Linux.
+4.  En el celular entra a: `http://<ipDelHost>:8080`.
+en caso de estar usando adaptador puente, simplemente ir a http://app-node
 
 -----
 
@@ -675,6 +926,40 @@ Implementación de **LVM (Logical Volume Manager)** en el nodo de Base de Datos.
 **Objetivo y Aporte:**
 * **Atomicidad:** Habilitar la capacidad de tomar *Snapshots* (fotografías instantáneas) del disco.
 * **Consistencia:** Asegurar que los backups de la base de datos se realicen sin corromper la información, incluso si el sistema está recibiendo escrituras en ese milisegundo.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -----
 
