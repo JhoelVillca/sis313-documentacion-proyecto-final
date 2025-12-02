@@ -4,14 +4,14 @@
 > **Semestre:** 2/2025<br>
 > **Docente:** Ing. Marcelo Quispe Ortega
 
-## 👥 Miembros del Equipo ([Número o denominación del grupo])
+## 👥 Miembros del Equipo G-11
 
 | Nombre Completo | Rol en el Proyecto | Contacto (GitHub/Email) |
 | :--- | :--- | :--- |
-| Pomacahua Cardoso Benjamin | Db Node | [Usuario de GitHub] |
+| Pomacahua Cardoso Benjamin | Db Node | [Benjamin](https://github.com/BPC-369) |
 | Fernando Jose Quispe Gardeazabal | DRP Control  | [FernandoQuispe](https://github.com/FerchoJQG)  |
 | Jhoel Mauricio Villca Villca | Boveda  | [JhoelVillca](https://github.com/JhoelVillca) |
-| Alan Jesus Uzeda Rivera | APP Node | [Usuario de GitHub] |
+| Alan Jesus Uzeda Rivera | APP Node | ----- |
 
 ## 🎯 I. Objetivo del Proyecto
 
@@ -106,11 +106,4 @@ Documenta los pasos esenciales para que cualquier persona pueda replicar el proy
 ## 📚 VII. Conclusiones y Lecciones Aprendidas
 
 Se logró implementar una arquitectura resiliente capaz de recuperar servicios críticos en segundos, cumpliendo el objetivo de automatización (T6) y continuidad (T1).
-
-
-
-
-
-  * La verdadera resiliencia no reside solo en tener copias de seguridad, sino en la capacidad orquestada de restaurarlas de forma predecible en un entorno hostil.
-  * La combinación de **LVM** para consistencia y **Restic** para eficiencia demostró ser superior a los métodos tradicionales de volcado SQL (`mysqldump`), reduciendo tiempos y carga en el servidor.
-  * La "Infraestructura como Código" (**Ansible**) es esencial para eliminar el pánico y el error humano durante una situación de desastre real.
+Es importante no solo enfocarse en evitar que una web se caiga, si no este proyecto nos ilumino haciendo darnos cuenta que tambien hay que pensar en que pasa si la web se cae.
