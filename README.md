@@ -17,7 +17,7 @@
 
 Describe el objetivo de manera puntual, debe ser específica y medible, tal como se define en el banco de proyectos o tal como lo plantean como proyecto.
 
-> **Objetivo:** [Indicar el objetivo del proyecto, ej: "Diseñar y configurar un clúster de Base de Datos con replicación Maestro-Esclavo para optimizar el rendimiento y la tolerancia a fallos."]
+> **Objetivo:** Diseñar e implementar un sistema de Backups Automáticos que utilice una estrategia incremental eficiente, gestione la retención y transforme el Plan de Recuperación ante Desastres (DRP) en código ejecutable para garantizar la integridad transaccional y minimizar el RTO.
 
 ## 💡 II. Justificación e Importancia
 
