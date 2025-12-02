@@ -1,4 +1,4 @@
-# 🚀 Proyecto Final SIS313: [Título del Proyecto]
+# 🚀 Proyecto Final SIS313: Diseño e Implementación de Plan de Backups Automatizado (Incremental y DRP)
 
 > **Asignatura:** SIS313: Infraestructura, Plataformas Tecnológicas y Redes<br>
 > **Semestre:** 2/2025<br>
@@ -8,10 +8,10 @@
 
 | Nombre Completo | Rol en el Proyecto | Contacto (GitHub/Email) |
 | :--- | :--- | :--- |
-| Pomacahua Cardoso Benjamin | Db Node | [Benjamin](https://github.com/BPC-369) |
+| Pomacahua Cardozo Benjamín | Db Node | [Benjamin](https://github.com/BPC-369) |
 | Fernando Jose Quispe Gardeazabal | DRP Control  | [FernandoQuispe](https://github.com/FerchoJQG)  |
 | Jhoel Mauricio Villca Villca | Boveda  | [JhoelVillca](https://github.com/JhoelVillca) |
-| Alan Jesus Uzeda Rivera | APP Node | ----- |
+| Alan Jesus Uzeda Rivera | APP Node | [Jesus](https://github.com/ajur23) |
 
 ## 🎯 I. Objetivo del Proyecto
 
