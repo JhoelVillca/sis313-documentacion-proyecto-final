@@ -8,7 +8,7 @@
 
 | Nombre Completo | Rol en el Proyecto | Contacto (GitHub/Email) |
 | :--- | :--- | :--- |
-| Pomacawa Cardoso Benjamin | Db Node | [Usuario de GitHub] |
+| Pomacahua Cardoso Benjamin | Db Node | [Usuario de GitHub] |
 | Fernando Jose Quispe Gardeazabal | DRP Control  | [FernandoQuispe](https://github.com/FerchoJQG)  |
 | Jhoel Mauricio Villca Villca | Boveda  | [JhoelVillca](https://github.com/JhoelVillca) |
 | Alan Jesus Uzeda Rivera | APP Node | [Usuario de GitHub] |
