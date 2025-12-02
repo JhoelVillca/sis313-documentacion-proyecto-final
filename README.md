@@ -56,6 +56,11 @@ Marca con un ✅ los temas avanzados de la asignatura que fueron implementados:
 
 Incluye un diagrama de la topología final. Muestra claramente la segmentación de red, las IPs utilizadas, y los flujos de tráfico.
 
+![Topologia](Group%201%20(3).png)
+
+
+
+
 > 
 | VM/Host | Rol | IP Overlay (Tailscale) | Red Lógica | SO |
 | :--- | :--- | :--- | :--- | :--- |
@@ -94,13 +99,16 @@ Documenta los pasos esenciales para que cualquier persona pueda replicar el proy
 
 **Incluir además los archivos de configuración y software a utilizar dentro del proyecto y organizados en carpetas.**
 
-## ⚠️ VI. Pruebas y Validación
+##  VI. Pruebas y Validación
 
 | Prueba Realizada | Resultado Esperado | Resultado Obtenido |
 | :--- | :--- | :--- |
 | **Simulación de Ataque Web** (Borrado de `index.php`) | El sitio debe devolver Error 404 y recuperarse automáticamente tras ejecutar Ansible. | **[ÉXITO]** Recuperado en \< 10s. |
 | **Destrucción de Base de Datos** (`rm -rf /var/lib/mysql`) | El servicio MariaDB debe fallar. Tras la restauración, los datos transaccionales deben reaparecer intactos. | **[ÉXITO]** Datos íntegros verificados. |
 | **Integridad de Snapshot LVM** | El backup no debe bloquear la base de datos ni corromper archivos abiertos durante la escritura. | **[ÉXITO]** Backup realizado en caliente sin errores. |
+
+
+[Para mayor detalle sobre la implementacion](https://github.com/JhoelVillca/SIS-313_PlanDeResiliencia)
 
 
 ## 📚 VII. Conclusiones y Lecciones Aprendidas
