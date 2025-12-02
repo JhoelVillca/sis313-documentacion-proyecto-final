@@ -1389,6 +1389,11 @@ sudo /usr/local/bin/backup_db.sh
 
 -----
 
+
+
+
+
+
 ## Fase 7: Automatización y Planificación de Alta Frecuencia
 **Descripción:**
 Programación de **Systemd Timers** y Servicios (`.service` y `.timer`) para ejecutar los scripts de backup automáticamente. Se define la estrategia de retención (GFS) adaptada al evento (retención de minutos/horas).
@@ -1398,15 +1403,18 @@ Programación de **Systemd Timers** y Servicios (`.service` y `.timer`) para eje
 * Establecer un **RPO (Recovery Point Objective)** cercano a cero, realizando copias de seguridad cada minuto de forma transparente.
 * Gestionar el ciclo de vida de los datos (borrado automático de backups obsoletos).
 
+Ubicación: Ejecutar en VM3 (db-node). Objetivo: Crear un "Timer" de Systemd que ejecute tu script backup_db.sh cada 60 segundos.
+
 #### 1\. Crear el Archivo de Servicio (.service)
 
-Este archivo le dice a Linux *QUÉ* ejecutar.
+Este archivo le dira a Linux *QUÉ* ejecutar.
 
 ```bash
 sudo nano /etc/systemd/system/backup-db.service
 ```
 
 Pega este contenido:
+Esto es el que va ejecutar:
 
 ```ini
 [Unit]
@@ -1437,7 +1445,7 @@ Description=Ejecuta backup de DB cada minuto (Modo Feria)
 
 [Timer]
 # Ejecutar cada minuto (:00, :01, :02...)
-OnCalendar=*:*
+OnCalendar=*:0/1
 Persistent=true
 
 [Install]
@@ -1465,9 +1473,28 @@ systemctl list-timers --all | grep backup
 
 -----
 
-### 🟢 Fase 7 - Paso 2: Creación del Script y Automatización en App Node (VM2)
 
-**Ubicación:** Ejecutar en **VM2 (`app-node`)**.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Paso 2: Creación del Script y Automatización en App Node (VM2)
+
+**Ubicación:** Ejecutar en **VM de  `app-node`**.
 **Objetivo:** Primero debemos crear el script de backup (que aún no existe, solo hicimos pruebas manuales) y luego automatizarlo.
 
 #### 1\. Crear el Script de Backup (con Retención)
@@ -1490,13 +1517,13 @@ export AWS_SECRET_ACCESS_KEY="SuperSecretKey123"
 export RESTIC_REPOSITORY="s3:http://minio-vault:9000/backup-repo"
 export RESTIC_PASSWORD="HolaMundo"
 
-# 1. El Backup (La Foto)
-echo "📸 Iniciando backup de App..."
+# 1. Ejecución del Backup
+echo "Iniciando respaldo de la aplicación..."
 restic backup /var/www/html --tag "app-auto"
 
-# 2. La Limpieza (El Reciclaje)
-# Mantenemos solo los últimos 20 snapshots para no saturar la demo
-echo "♻️ Aplicando política de retención..."
+# 2. Aplicación de política de retención
+# Se mantienen solo los últimos 20 snapshots para evitar saturación
+echo "Aplicando política de retención..."
 restic forget --keep-last 20 --prune
 ```
 
@@ -1538,7 +1565,7 @@ Contenido:
 Description=Ejecuta backup de App cada minuto
 
 [Timer]
-OnCalendar=*:*
+OnCalendar=*:0/1
 Persistent=true
 
 [Install]
@@ -1554,7 +1581,7 @@ sudo systemctl enable --now backup-app.timer
 
 -----
 
-### ⚠️ Verificación Final de la Fase 7
+###  Verificación  de la Fase 7
 
 Espera 1 o 2 minutos. Luego, ve a tu **VM4 (`drp-control`)** (el Cerebro) y pregunta a la Bóveda qué hay de nuevo.
 
@@ -1564,11 +1591,15 @@ En **VM4**, ejecuta:
 mc ls -r mi-boveda/backup-repo/snapshots/
 ```
 
-Si ves una lista de archivos que crece cada minuto (con horas diferentes), **FELICIDADES**.
-Has construido un sistema vivo que se protege a sí mismo.
+Si ves una lista de archivos que crece cada minuto (con horas diferentes),  esta bien. 
 
-¿Los timers están corriendo y ves los snapshots multiplicándose en la VM4?
-Di **"Sistema Automático Operativo"** y pasamos a la **Fase 8: El Rescate (Ansible)**.
+
+
+
+
+
+
+
 
 
 
