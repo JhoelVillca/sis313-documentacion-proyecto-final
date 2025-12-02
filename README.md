@@ -8,10 +8,10 @@
 
 | Nombre Completo | Rol en el Proyecto | Contacto (GitHub/Email) |
 | :--- | :--- | :--- |
-| [Nombre y Apellido 1] | [Rol Principal: Ej. Arquitecto de Seguridad] | [Usuario de GitHub] |
+| Pomacawa Cardoso Benjamin | Db Node | [Usuario de GitHub] |
 | Fernando Jose Quispe Gardeazabal | DRP Control  | [FernandoQuispe](https://github.com/FerchoJQG)  |
-| Jhoel Mauricio Villca Villca | Rol  | [JhoelVillca](https://github.com/JhoelVillca) |
-| [Nombre y Apellido 4] | [Rol Opcional] | [Usuario de GitHub] |
+| Jhoel Mauricio Villca Villca | Boveda  | [JhoelVillca](https://github.com/JhoelVillca) |
+| Alan Jesus Uzeda Rivera | APP Node | [Usuario de GitHub] |
 
 ## 🎯 I. Objetivo del Proyecto
 
