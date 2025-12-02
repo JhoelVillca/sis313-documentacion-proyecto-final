@@ -9,7 +9,7 @@
 | Nombre Completo | Rol en el Proyecto | Contacto (GitHub/Email) |
 | :--- | :--- | :--- |
 | [Nombre y Apellido 1] | [Rol Principal: Ej. Arquitecto de Seguridad] | [Usuario de GitHub] |
-| [Nombre y Apellido 2] | [Rol Principal: Ej. Ingeniero de Automatización] | [Usuario de GitHub] |
+| Fernando Jose Quispe Gardeazabal | [Rol Principal: Ej. Ingeniero de Automatización] | https://github.com/FerchoJQG  |
 | Jhoel Mauricio Villca Villca | Rol  | [JhoelVillca](https://github.com/JhoelVillca) |
 | [Nombre y Apellido 4] | [Rol Opcional] | [Usuario de GitHub] |
 
