@@ -6,10 +6,8 @@
 ### El Problema: 
 En la administración de sistemas tradicional, los backups suelen fallar silenciosamente. Los scripts de copia (`cp`, `rsync`) no garantizan la consistencia si la base de datos está escribiendo en ese momento, y la recuperación manual ("DRP en papel") es lenta y propensa a errores humanos bajo presión.
 
-> **Si un backup no ha sido probado mediante una restauración, no existe.**
-
 ### La Solución
-Este proyecto implementa un **Sistema de Resiliencia Automatizada** diseñado para cumplir con los estándares de **Continuidad Operacional**. Transformamos el DRP en código ejecutable para garantizar que la recuperación sea:
+Este proyecto implementa un **Sistema de Resiliencia Automatizada** diseñado para cumplir con los estándares de **Continuidad Operacional**. Transformamos el DRP en código ejecutable para que la recuperación sea:
 1.  **Consistente:** Uso de **LVM Snapshots** para "congelar" el estado del disco en milisegundos, asegurando que la base de datos (MariaDB) nunca se copie en un estado corrupto.
 2.  **Eficiente:** Implementación de **Restic** para backups incrementales con deduplicación. Solo se transmiten y almacenan los bytes que han cambiado, reduciendo el uso de red y almacenamiento.
 3.  **Gestionada:** Aplicación de políticas de retención **GFS (Grandfather-Father-Son)** automáticas para mantener copias históricas sin saturar el almacenamiento.
@@ -20,8 +18,6 @@ Este proyecto implementa un **Sistema de Resiliencia Automatizada** diseñado pa
 ##  Arquitectura de la Solución
 
 El sistema se distribuye en **4 Nodos Lógicos** interconectados, diseñados para simular un entorno de producción real donde los servicios (App/DB), el almacenamiento (Backups) y la gestión (Control) están desacoplados para garantizar la supervivencia de los datos incluso si los servidores principales son comprometidos.
-
-# AQUI PONDREMOS LA TOPOLOGIA
 
 
 | Nodo | Rol | Función Crítica |
@@ -49,7 +45,7 @@ El sistema se distribuye en **4 Nodos Lógicos** interconectados, diseñados par
 
 ### 3. Planificación: Systemd Timers
 
-* **La Mejora:** **Systemd** maneja dependencias (ej: *"no inicies el backup si no hay red"*), reintentos automáticos si falla la conexión, y registro de logs centralizado (`journalctl`). Es vital para la **Automatización** robusta.
+* **La Mejora:** **Systemd** maneja dependencias, reintentos automáticos si falla la conexión, y registro de logs centralizado (`journalctl`). Es vital para la **Automatización** robusta.
 
 ### 4. Orquestación DRP: Ansible
 > *Requisito: Automatización de la Restauración*
@@ -67,13 +63,11 @@ En un entorno empresarial real, aplicamos el esquema estándar **Grandfather-Fat
 * **Father (Semanal):** `--keep-weekly 4` (Mantiene 1 por semana durante un mes).
 * **Grandfather (Mensual):** `--keep-monthly 6` (Mantiene 1 por mes durante medio año).
 
-### Perfil Demostración (Para la demostracion para la feria)
-> Debido a la naturaleza efímera del evento (ciclos de vida de minutos), hemos ajustado el "cronómetro" para operar en **Alta Frecuencia**:
+### Para la demostracion
 
 * **Frecuencia de Backup:** Cada **60 segundos** (Systemd Timer).
 * **Política de Retención:** `keep-last 20`.
     * *Justificación:* Esto nos permite viajar en el tiempo minuto a minuto durante la presentación, mostrando cambios inmediatos sin esperar días o semanas.
-
 
 
 > *Esto demuestra la capacidad de Restic para gestionar el ciclo de vida de los datos sin intervención humana, escalando desde minutos (demo) hasta años (producción).*
@@ -193,10 +187,9 @@ Si es afirmativo, di **"Discos Listos"** y lanzamos la **Fase 2: La Bóveda**.
 
 ## Fase 2: Implementación de Red de Malla (Overlay Network)
 **Descripción:**
-Despliegue de una red privada virtual (VPN de malla) utilizando **Tailscale/ZeroTier**. Esto crea una capa de red abstracta sobre la infraestructura física, permitiendo que las máquinas se comuniquen de forma segura y encriptada sin depender de la configuración del router local (Wi-Fi de la feria o laboratorio).
+Despliegue de una red privada virtual (VPN de malla) utilizando **Tailscale/ZeroTier**. Esto crea una capa de red abstracta sobre la infraestructura física, que deja que las máquinas se comuniquen de forma segura y encriptada sin depender de la configuración del router local.
 
 **Objetivo y Aporte:**
-* **Portabilidad Total:** El sistema funciona idénticamente en el laboratorio, en una feria pública o en Internet.
 * **Independencia de IP:** Uso de *MagicDNS* para resolver nombres (`db-node`, `app-node`) en lugar de depender de IPs estáticas frágiles.
 * **Seguridad:** Todo el tráfico entre nodos viaja cifrado, inmune a espionaje en redes públicas.
 
@@ -479,12 +472,12 @@ sudo usermod -aG docker $USER
 ** Acción necesaria:** Para que este cambio surta efecto, debes **cerrar sesión y volver a entrar** (logout/login) o ejecutar, si es por ssh con exit y luego volver a entrar:
 
 ```bash
-newgrp docker
+newgrp dockerf
 ```
 
 #### 3\. Despliegue del Contenedor MinIO
 
-Este es el comando principal que levanta el servidor. Copia y pega el bloque completo.
+Este es el comando principal que levanta el servidor. pon esto en el bloque completo.
 
 ```bash
 docker run -dt \
@@ -584,7 +577,7 @@ dentro, al final pondremos
 ```bash
 export PATH=$PATH:$HOME/minio-binaries/
 ```
-y para recargar el archivo (la nueva configuracion)
+
 ```bash
 source ~/.bashrc
 ```
@@ -689,7 +682,7 @@ Entra como root:
 sudo mysql
 ```
 
-Copia y pega este bloque SQL completo en la consola de MariaDB:
+pon esto en este bloque SQL completo en la consola de MariaDB:
 
 ```sql
 CREATE DATABASE financiera;
@@ -1024,7 +1017,7 @@ try {
 </body>
 </html>
 <?php 
-// Cerrar conexión solo si se creó exitosamente
+// Cerrar conexión solo si se creo exitosamente
 if (isset($conn) && $conn instanceof mysqli) {
     $conn->close(); 
 }
@@ -1035,7 +1028,7 @@ if (isset($conn) && $conn instanceof mysqli) {
 
 ### Paso 3: Acceso Público (Port Forwarding)
 
-para permitir que alguien conectado al Wi-Fi de la feria entre a tu página web usando la IP.
+para permitir que alguien conectado al Wi-Fi.
 
 1.  Abrimos **VirtualBox**.
 2.  Selecciona la **VM`app-node`** -\> **Configuración**.
@@ -1260,7 +1253,7 @@ Ejecutar en **la maquina encargada de `app-node`**.
 
 Restic necesita saber tres cosas: **DÓNDE** guardar (MinIO), **QUIÉN** eres (Credenciales) y **CÓMO** cifrar (Password de Restic).
 
-Copia y pega este bloque completo en la terminal:
+pon esto en este bloque completo en la terminal:
 
 ```bash
 export AWS_ACCESS_KEY_ID="admin"
@@ -1337,11 +1330,8 @@ sudo nano /usr/local/bin/backup_db.sh
 
 #### 2\. El script para el backup
 
-Copia y pega este contenido.
-
 ```bash
 #!/bin/bash
-set -e
 
 export AWS_ACCESS_KEY_ID="admin"
 export AWS_SECRET_ACCESS_KEY="SuperSecretKey123"
@@ -1353,21 +1343,32 @@ LV_NAME="lv_mysql"
 SNAP_NAME="snap_backup"
 MOUNT_POINT="/mnt/snapshot_db"
 
-echo "Creando snapshot LVM..."
+echo "[0] Verificando zona de trabajo..."
+if mountpoint -q $MOUNT_POINT; then
+    umount $MOUNT_POINT
+fi
+if lvdisplay /dev/$VG_NAME/$SNAP_NAME >/dev/null 2>&1; then
+    lvremove -y /dev/$VG_NAME/$SNAP_NAME
+fi
+
+echo "[1] Creando Snapshot..."
 lvcreate -L 500M -s -n $SNAP_NAME /dev/$VG_NAME/$LV_NAME
 
-echo "Montando snapshot en modo lectura..."
+echo "[2] Montando..."
 mkdir -p $MOUNT_POINT
 mount -o ro /dev/$VG_NAME/$SNAP_NAME $MOUNT_POINT
 
-echo "Ejecutando backup con Restic..."
+echo "[3] Enviando a bóveda..."
 restic backup $MOUNT_POINT --tag "db-consistent-snap"
 
-echo "Eliminando snapshot temporal..."
+echo "[4] Limpiando..."
 umount $MOUNT_POINT
 lvremove -y /dev/$VG_NAME/$SNAP_NAME
 
-echo "Backup consistente completado."
+echo "[5] Aplicando retención..."
+restic forget --keep-last 20 --keep-daily 7 --prune
+
+echo "Backup completado exitosamente."
 ```
 #### 3\. Hacerlo ejecutable
 
@@ -1381,17 +1382,50 @@ sudo chmod +x /usr/local/bin/backup_db.sh
 
 ### Prueba(Base de Datos)
 
-Ahora sí, vamos a respaldar los datos. Ejecuta el script manualmente:
-
 ```bash
 sudo /usr/local/bin/backup_db.sh
 ```
+```bash
+#!/bin/bash
 
+export AWS_ACCESS_KEY_ID="admin"
+export AWS_SECRET_ACCESS_KEY="SuperSecretKey123"
+export RESTIC_REPOSITORY="s3:http://minio-vault:9000/backup-repo"
+export RESTIC_PASSWORD="HolaMundo"
+
+VG_NAME="vg_datos"
+LV_NAME="lv_mysql"
+SNAP_NAME="snap_backup"
+MOUNT_POINT="/mnt/snapshot_db"
+
+echo "[0] Verificando zona de trabajo..."
+if mountpoint -q $MOUNT_POINT; then
+    umount $MOUNT_POINT
+fi
+if lvdisplay /dev/$VG_NAME/$SNAP_NAME >/dev/null 2>&1; then
+    lvremove -y /dev/$VG_NAME/$SNAP_NAME
+fi
+
+echo "[1] Creando Snapshot..."
+lvcreate -L 500M -s -n $SNAP_NAME /dev/$VG_NAME/$LV_NAME
+
+echo "[2] Montando..."
+mkdir -p $MOUNT_POINT
+mount -o ro /dev/$VG_NAME/$SNAP_NAME $MOUNT_POINT
+
+echo "[3] Enviando a bóveda..."
+restic backup $MOUNT_POINT --tag "db-consistent-snap"
+
+echo "[4] Limpiando..."
+umount $MOUNT_POINT
+lvremove -y /dev/$VG_NAME/$SNAP_NAME
+
+echo "[5] Aplicando retención..."
+restic forget --keep-last 20 --keep-daily 7 --prune
+
+echo "Backup completado exitosamente."
+```
 -----
-
-
-
-
 
 
 ## Fase 7: Automatización y Planificación de Alta Frecuencia
@@ -1441,8 +1475,6 @@ Pega este contenido:
 
 ```ini
 [Unit]
-Description=Ejecuta backup de DB cada minuto (Modo Feria)
-
 [Timer]
 # Ejecutar cada minuto (:00, :01, :02...)
 OnCalendar=*:0/1
@@ -1469,27 +1501,9 @@ Comprueba que el cronómetro está corriendo.
 systemctl list-timers --all | grep backup
 ```
 
-> **Resultado:** Deberías ver `backup-db.timer` y en la columna "LEFT" debería decir algo como `30s left` (tiempo para el próximo disparo).
+> **Resultado:** Deberías ver `backup-db.timer` y en la columna "LEFT" debería decir algo como `30s left`.
 
 -----
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ### Paso 2: Creación del Script y Automatización en App Node (VM2)
@@ -1505,7 +1519,7 @@ Aquí incluiremos el comando `forget` para borrar backups viejos automáticament
 sudo nano /usr/local/bin/backup_app.sh
 ```
 
-Pega este código (ajustado para la demo):
+Pega este código :
 
 ```bash
 #!/bin/bash
@@ -1594,37 +1608,6 @@ mc ls -r mi-boveda/backup-repo/snapshots/
 Si ves una lista de archivos que crece cada minuto (con horas diferentes),  esta bien. 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 -----
 
 ## Fase 8: Orquestación de Recuperación (DRP como Código)
@@ -1635,976 +1618,658 @@ Desarrollo de Playbooks de **Ansible** en el nodo de Control. Estos scripts cont
 * **Reducción del RTO (Recovery Time Objective):** Pasar de horas de restauración manual a segundos de restauración automática.
 * **Idempotencia:** Asegurar que el proceso de recuperación sea repetible y libre de errores bajo presión.
 
+
+
+
+
+-----
+
+### Paso 1: Preparación del Cerebro (Inventario y Llaves)
+
+**Ubicación:** Ejecutar en **VM4 (`drp-control`)**.
+**Objetivo:** Enseñar a Ansible quiénes son las víctimas (`app-node` y `db-node`) y darle las llaves para entrar sin tocar el timbre (SSH sin contraseña).
+
+> ** Nota Táctica:** Como estamos usando usuarios específicos (`admin-app`, `admin-db`) y no `root`, debemos configurar esto con cuidado.
+
+#### 1\. Generar la Llave Maestra (Si no existe)
+
+En VM4, verificamos si ya tienes un par de llaves SSH.
+
+```bash
+ls ~/.ssh/id_rsa.pub
+```
+
+  * Si dice "No such file", genérala (dale Enter a todo):
+    ```bash
+    ssh-keygen -t rsa -b 4096
+    ```
+
+#### 2\. Repartir las Llaves (Acceso sin contraseña)
+
+Ansible no puede escribir contraseñas. Necesita entrar directo. Copia tu llave a los nodos.
+
+```bash
+# Copiar a la App (VM2)
+ssh-copy-id admin-app@app-node
+```
+```bash
+# Copiar a la DB (VM3)
+ssh-copy-id admin-db@db-node
+```
+
+#### 3\. Crear el Espacio de Trabajo
+
+Organicemos.
+
+```bash
+mkdir -p ~/ansible-drp
+cd ~/ansible-drp
+```
+
+#### 4\. Crear el Inventario (`hosts`)
+
+Aquí definimos el mapa de guerra. Usaremos los **Hostnames**  para que esto funcione con o sin Tailscale.
+
+```bash
+nano hosts
+```
+
+Pega este contenido:
+
+```ini
+[app_servers]
+app-node ansible_user=admin-app
+
+[db_servers]
+db-node ansible_user=admin-db
+```
+
+> **Nota:** `ansible_user` le dice a Ansible con qué usuario loguearse en cada grupo.
+
+
+
+Instalar el software:.
+
+```bash
+sudo apt update && sudo apt install ansible -y
+```
+
+Verificar que respira:
+
+```bash
+ansible --version
+```
+
+
+#### 5\. Prueba de Conexión (Ping Masivo)
+
+Verificamos que el Cerebro controla las demas vms.
+
+```bash
+cd ~/ansible-drp
+ansible all -i hosts -m ping
+```
+
+**Resultado Esperado:**
+Deberías ver dos bloques verdes que digan `"ping": "pong"` para `app-node` y `db-node`.
+
+-----
+
+### Paso 2: La Resurrección de DB (`restore_db.yml`)
+
+**Ubicación:** VM4 (`~/ansible-drp/restore_db.yml`)
+
+Crea el archivo:
+
+```bash
+nano restore_db.yml
+```
+```yaml
+---
+- name: DRP - Restauración Crítica de Base de Datos
+  hosts: db_servers
+  become: yes
+  
+  vars:
+    repo_url: "s3:http://minio-vault:9000/backup-repo"
+    restic_pass: "HolaMundo"
+    env_vars:
+      AWS_ACCESS_KEY_ID: "admin"
+      AWS_SECRET_ACCESS_KEY: "SuperSecretKey123"
+      RESTIC_REPOSITORY: "{{ repo_url }}"
+      RESTIC_PASSWORD: "{{ restic_pass }}"
+    mysql_data_dir: "/var/lib/mysql"
+    temp_restore_dir: "/tmp/db_recovery_zone"
+
+  tasks:
+    - name: Detener MariaDB
+      service:
+        name: mariadb
+        state: stopped
+
+    - name: Limpiar directorio MySQL
+      shell: rm -rf {{ mysql_data_dir }}/*
+
+    - name: Eliminar directorio temporal
+      file:
+        path: "{{ temp_restore_dir }}"
+        state: absent
+
+    - name: Restaurar en directorio temporal
+      shell: |
+        export AWS_ACCESS_KEY_ID="{{ env_vars.AWS_ACCESS_KEY_ID }}"
+        export AWS_SECRET_ACCESS_KEY="{{ env_vars.AWS_SECRET_ACCESS_KEY }}"
+        export RESTIC_PASSWORD="{{ env_vars.RESTIC_PASSWORD }}"
+        restic -r {{ repo_url }} restore {{ snapshot_id | default('latest') }} --target {{ temp_restore_dir }}
+
+    - name: Copiar datos restaurados a MySQL
+      shell: cp -a {{ temp_restore_dir }}/mnt/snapshot_db/. {{ mysql_data_dir }}/
+
+    - name: Ajustar permisos
+      file:
+        path: "{{ mysql_data_dir }}"
+        owner: mysql
+        group: mysql
+        recurse: yes
+
+    - name: Eliminar directorio temporal
+      file:
+        path: "{{ temp_restore_dir }}"
+        state: absent
+
+    - name: Iniciar MariaDB
+      service:
+        name: mariadb
+        state: started
+
+    - name: Reporte
+      debug:
+        msg: "Base de datos restaurada exitosamente."
+```
+
+
+-----
+
+### Paso 3: La de App Web (`restore_app.yml`)
+
+**Ubicación:** VM4 (`~/ansible-drp/restore_app.yml`)
+
+Crea el archivo:
+
+```bash
+nano restore_app.yml
+```
+
+Pega este código:
+
+```yaml
+---
+- name: DRP - Restauración de Aplicación Web
+  hosts: app_servers
+  become: yes
+  vars:
+    repo_url: "s3:http://minio-vault:9000/backup-repo"
+    restic_pass: "HolaMundo"
+    env_vars:
+      AWS_ACCESS_KEY_ID: "admin"
+      AWS_SECRET_ACCESS_KEY: "SuperSecretKey123"
+      RESTIC_REPOSITORY: "{{ repo_url }}"
+      RESTIC_PASSWORD: "{{ restic_pass }}"
+    web_root: "/var/www/html"
+
+  tasks:
+    - name: "[1] LIMPIAR SITIO DEFECTUOSO"
+      file:
+        path: "{{ web_root }}"
+        state: absent
+    
+    - name: "[2] RECREAR DIRECTORIO"
+      file:
+        path: "{{ web_root }}"
+        state: directory
+        mode: '0755'
+        owner: www-data
+        group: www-data
+
+    - name: "[3] RESTAURAR CÓDIGO FUENTE"
+      shell: |
+        export AWS_ACCESS_KEY_ID="{{ env_vars.AWS_ACCESS_KEY_ID }}"
+        export AWS_SECRET_ACCESS_KEY="{{ env_vars.AWS_SECRET_ACCESS_KEY }}"
+        export RESTIC_PASSWORD="{{ env_vars.RESTIC_PASSWORD }}"
+        
+        # Restaurar tag app-auto
+        restic -r {{ repo_url }} restore latest --tag "app-auto" --target /
+      register: app_restore_out
+
+    - name: "[4] CORREGIR PERMISOS FINALES"
+      file:
+        path: "{{ web_root }}"
+        owner: www-data
+        group: www-data
+        recurse: yes
+
+    - name: "[5] REPORTE"
+      debug:
+        msg: "Aplicación Web Recuperada. Restic: {{ app_restore_out.stdout_lines | last }}"
+```
+
+-----
+
+### Verificación
+
+
+1.  En **VM2 (App)**, borra el `index.php`:
+    ```bash
+    sudo rm /var/www/html/index.php
+    ```
+2.  Verifica en el navegador: Error 404 o "Index of /".
+3.  En **VM4 (Control)**, lanza el rescate:
+    ```bash
+    ansible-playbook -i hosts restore_app.yml -K
+    ```
+
+
+
+
+
+
+
+
+
+
+
 -----
 
 ## Fase 9: Interfaz de Demostración y Control Visual
 **Descripción:**
-Creación de scripts interactivos (Menú de Mando) y monitores de estado en tiempo real. Esto permite al operador ejecutar ataques simulados y restauraciones quirúrgicas seleccionando IDs específicos de backups.
+Creación de scripts interactivos y monitores de estado en tiempo real. Esto permite al operador ejecutar ataques simulados y restauraciones quirúrgicas seleccionando IDs específicos de backups.
 
 **Objetivo y Aporte:**
 * Hacer visible lo invisible: Permitir que la audiencia "vea" los backups ocurriendo en tiempo real.
-* Facilitar la operación durante la feria, abstrayendo la complejidad de los comandos de terminal en un menú intuitivo.
+
+**Ubicación:** Todo esto se hace en **VM4 (`drp-control`)**.
+**Objetivo:** Crear un "Tablero de Control" dividido en dos pantallas:
+
+1.  **Monitor:** Ver los snapshots llegando en tiempo real.
+2.  **Control:** Un menú interactivo para lanzar ataques y rescates sin escribir comandos largos.
 
 -----
 
 
 
+#### Paso 1: Preparar el Terreno
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ANTERIOR:
-NUEVO:
-# Sistema de Resiliencia Operativa y DRP (Plan de Recuperación ante Desastres)
-
-----
-## Descripción del Proyecto
-
-### El Problema: 
-En la administración de sistemas tradicional, los backups suelen fallar silenciosamente. Los scripts de copia (`cp`, `rsync`) no garantizan la consistencia si la base de datos está escribiendo en ese momento, y la recuperación manual ("DRP en papel") es lenta y propensa a errores humanos bajo presión.
-
-> **Si un backup no ha sido probado mediante una restauración, no existe.**
-
-### La Solución
-Este proyecto implementa un **Sistema de Resiliencia Automatizada** diseñado para cumplir con los estándares de **Continuidad Operacional**. Transformamos el DRP en código ejecutable para garantizar que la recuperación sea:
-1.  **Consistente:** Uso de **LVM Snapshots** para "congelar" el estado del disco en milisegundos, asegurando que la base de datos (MariaDB) nunca se copie en un estado corrupto.
-2.  **Eficiente:** Implementación de **Restic** para backups incrementales con deduplicación. Solo se transmiten y almacenan los bytes que han cambiado, reduciendo el uso de red y almacenamiento.
-3.  **Gestionada:** Aplicación de políticas de retención **GFS (Grandfather-Father-Son)** automáticas para mantener copias históricas sin saturar el almacenamiento.
-4.  **Inmortal:** Orquestación con **Ansible** para automatizar la resurrección completa del servicio en minutos, eliminando el factor humano durante la crisis.
-
----
-
-##  Arquitectura de la Solución
-
-El sistema se distribuye en **4 Nodos Lógicos** interconectados, diseñados para simular un entorno de producción real donde los servicios (App/DB), el almacenamiento (Backups) y la gestión (Control) están desacoplados para garantizar la supervivencia de los datos incluso si los servidores principales son comprometidos.
-
-# AQUI PONDREMOS LA TOPOLOGIA
-
-
-| Nodo | Rol | Función Crítica |
-| :--- | :--- | :--- |
-| **VM1** | `Bóveda (Storage)` | Almacenamiento inmutable de backups (MinIO). Actúa como "caja negra" externa. |
-| **VM2** | `App Node` | Servidor Web (Nginx/Apache). Representa la cara visible del negocio. |
-| **VM3** | `DB Node` | Base de Datos (MariaDB) sobre lúmenes LVM. Es el activo más valioso. |
-| **VM4** | `Cerebro (Control)` | Nodo de gestión desde donde Ansible ejecuta la recuperación automática. |
-
----
-
-## Tecnologías Seleccionadas
-
-### 1. Motor de Backup: Restic
-
-* **¿Por qué?** **Restic** utiliza una arquitectura de **"Chunk-Based Deduplication"** (Deduplicación basada en fragmentos).
-* **Eficiencia:** Si cambias 1 MB en una base de datos de 10 GB, Restic solo transfiere y guarda ese 1 MB. Esto cumple con el requisito de **estrategia incremental** sin la complejidad de gestionar cadenas de incrementales frágiles.
-* **Seguridad:** Todo dato que sale del servidor es cifrado con **AES-256** (Cifrado simétrico fuerte con una longitud clave de 256 bits) antes de tocar la red.
-
-### 2. Consistencia de Datos: LVM (Logical Volume Manager)
-> *Requisito: Integridad en Caliente*
-
-* **El Desafío:** Copiar los archivos de una base de datos mientras está encendida resulta en backups corruptos e inutilizables.
-* **La Solución:** Utilizamos **Snapshots LVM**. Esto "congela" el sistema de archivos en el tiempo exacto en milisegundos, permitiendo a Restic copiar los datos estáticos mientras la base de datos sigue recibiendo escrituras en un espacio temporal.
-
-### 3. Planificación: Systemd Timers
-
-* **La Mejora:** **Systemd** maneja dependencias (ej: *"no inicies el backup si no hay red"*), reintentos automáticos si falla la conexión, y registro de logs centralizado (`journalctl`). Es vital para la **Automatización** robusta.
-
-### 4. Orquestación DRP: Ansible
-> *Requisito: Automatización de la Restauración*
-
-* **¿Por qué?** Un Plan de Recuperación ante Desastres (DRP) documentado en papel es lento y propenso a error humano durante una crisis.
-* **La Solución:** Transformamos el DRP en **Playbooks de Ansible**. Esto nos permite reconstruir el servicio, reinstalar dependencias y restaurar los datos con un solo comando, reduciendo el **RTO (Recovery Time Objective)** de horas a minutos.
-
----
-##  Estrategia de Retención de Datos
-
-### Perfil Producción (GFS en un entorno serio)
-En un entorno empresarial real, aplicamos el esquema estándar **Grandfather-Father-Son** para cumplir con auditorías y recuperación a largo plazo:
-
-* **Son (Diario):** `--keep-daily 7` (Mantiene 1 backup por día durante una semana).
-* **Father (Semanal):** `--keep-weekly 4` (Mantiene 1 por semana durante un mes).
-* **Grandfather (Mensual):** `--keep-monthly 6` (Mantiene 1 por mes durante medio año).
-
-### Para la demostracion
-
-* **Frecuencia de Backup:** Cada **60 segundos** (Systemd Timer).
-* **Política de Retención:** `keep-last 20`.
-    * *Justificación:* Esto nos permite viajar minuto a minuto durante la presentación, mostrando cambios inmediatos sin esperar días o semanas.
-
-
-
-> *Esto demuestra la capacidad de Restic para gestionar el ciclo de vida de los datos sin intervención humana, escalando desde minutos (demo) hasta años (producción).*
-
----
-
-##  Protocolo de Integridad 
-Un riesgo crítico en sistemas automatizados es que el backup automático se ejecute *justo después* de un incidente destructivo, guardando un estado "vacío" o corrupto como el más reciente (`latest`).
-
-**Nuestra Solución: Restauración por ID Inmutable.**
-En lugar de restaurar ciegamente la etiqueta `latest`, nuestro **Menú de Control (Ansible)** permite al operador seleccionar un **Snapshot ID** específico.
-1.  El sistema sigue haciendo backups (incluso del desastre), lo cual sirve como registro forense.
-2.  El operador visualiza la línea de tiempo.
-3.  Se selecciona el punto de restauración *previo* al incidente (T-1 minuto).
-
-> **Resiliencia no es solo guardar datos, Tambien debemos saber a que version restaurar.**
-
-***
-
-
-
-----------------
-OLD:
-
-# Plan de Resiliencia
-Para este proyecto se usara 4 maquinas:
-la direccion ip interna que usaremos sera 192.168.50.x
-
-Restic para el motor.
-
-Systemd para el cronómetro.
-
-LVM para la integridad de los datos.
-
-Ansible para la resurrección del sistema.
-
-```mermaid
-graph TD
-    subgraph "Zona Hostil (Internet / Red Externa)"
-        USER[Tu Laptop / Host]
-    end
-
-    subgraph "DMZ / Bastión (192.168.50.10)"
-        VM1[("VM1: MinIO Vault<br>(Docker + S3)")]
-        FW[Firewall / NAT]
-    end
-
-    subgraph "Zona Segura (Red Interna Aislada)"
-        VM2["VM2: App Node<br>(Nginx + Restic)"]
-        VM3[("VM3: DB Node<br>(MariaDB + LVM + Restic)")]
-        VM4{{"VM4: DRP Control<br>(Ansible + Cerebro)"}}
-    end
-
-    %% Conexiones Externas
-    USER -->|"SSH :2222"| FW
-    FW -->|"Port Forward"| VM1
-    VM1 -.->|"NAT Masquerade"| USER
-
-    %% Flujo de Backups (Datos)
-    VM2 -->|"Restic Encriptado"| VM1
-    VM3 -->|"Restic Encriptado"| VM1
-
-    %% Flujo de Orquestación (Control)
-    VM4 -->|"SSH + Ansible"| VM2
-    VM4 -->|"SSH + Ansible"| VM3
-    VM4 -.->|"API S3"| VM1
-
-```
-#  Fase : Arquitectura de Hierro
-
-##  Especificaciones de Hardware
-- **Host Global**: mínimo 8 GB RAM libres.  
-- **Distribución de VMs:**
-
-| VM | Hostname | RAM | CPU | Disco OS | Disco Datos | Red |
-|----|----------|-----|-----|----------|-------------|-----|
-| VM1 | `minio-vault` | 2048 MB | 2 | 25 GB | 20 GB (Backups) | NAT + Red Interna |
-| VM2 | `app-node` | 1024 MB | 1 | 25 GB | - | Red Interna |
-| VM3 | `db-node` | 1536 MB | 1 | 25 GB | 10 GB (LVM) | Red Interna |
-| VM4 | `drp-control` | 1024 MB | 1 | 25 GB | - | Red Interna |
-
-**Notas clave:**
-- VM1 = Bastion Host (único acceso a internet).  
-- VM3 = disco extra obligatorio para snapshots LVM.  
-- Red Interna = aislada, solo VM1 conecta al exterior.
-- para ver los discos en una vm el comando es:
-  ```bash
-  lsblk
-  ```
-
-## En todas las máquinas
+En **VM4**, sal de la carpeta `ansible-drp` y crea una nueva:
 
 ```bash
-sudo apt update && sudo apt upgrade -y
+cd ~
+mkdir demo
+cd demo
 ```
-> Para actualizar todos los paquetes
-```bash
-sudo apt install net-tools curl git htop nano -y
-```
-> Sirve para instalar herramientas basicas que vamos a usar
----
-## Para configurar las ip staticas
-### VM1 - minio-vault
-```bash
-sudo nano /etc/netplan/50-cloud-init.yaml
-```
->Esta es la configuracion de red
-dentro de la configuracion de red
-```bash
-network:
-  version: 2
-  renderer: networkd
-  ethernets:
-    enp0s3:
-      dhcp4: true
-    enp0s8:
-      dhcp4: no
-      addresses:
-        - 192.168.50.10/24
-```
-aplicar cambios
-```bash
-sudo netplan apply
-```
-Para activar reenvío de paquetes en el kernel
-```bash
-echo "net.ipv4.ip_forward=1" | sudo tee -a /etc/sysctl.conf
-sudo sysctl -p
-```
-Instalar iptables-persistent para guardar las reglas
-```bash
-sudo apt install iptables-persistent -y
-```
-Es la regla NAT para que las demas maquinas tengan acceso a internet
-```bash
-sudo iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
-sudo netfilter-persistent save
-```
-### VM2-app-node
-abrir la configuracion de red
-```bash
-sudo nano /etc/netplan/50-cloud-init.yaml
-```
-alli dentro
-```bash
-network:
-  version: 2
-  renderer: networkd
-  ethernets:
-    enp0s3:
-      dhcp4: no
-      addresses:
-        - 192.168.50.20/24
-      routes:
-        - to: default
-          via: 192.168.50.10
-      nameservers:
-        addresses: [8.8.8.8, 1.1.1.1]
-```
-aplicar cambios
-```bash
-sudo netplan apply
-```
-### VM3-db-node
-abrir la configuracion de red
-```bash
-sudo nano /etc/netplan/50-cloud-init.yaml
-```
-alli dentro
-```bash
-network:
-  version: 2
-  renderer: networkd
-  ethernets:
-    enp0s3:
-      dhcp4: no
-      addresses:
-        - 192.168.50.30/24
-      routes:
-        - to: default
-          via: 192.168.50.10
-      nameservers:
-        addresses: [8.8.8.8, 1.1.1.1]
-```
-aplicar cambios
-```bash
-sudo netplan apply
-```
-### VM4-drp-control
-abrir la configuracion de red
-```bash
-sudo nano /etc/netplan/50-cloud-init.yaml
-```
-ahi dentro
-```bash
-network:
-  version: 2
-  renderer: networkd
-  ethernets:
-    enp0s3:
-      dhcp4: no
-      addresses:
-        - 192.168.50.40/24
-      routes:
-        - to: default
-          via: 192.168.50.10
-      nameservers:
-        addresses: [8.8.8.8, 1.1.1.1]
-```
-aplicar cambios
-```bash
-sudo netplan apply
-```
-> # PARA PROBAR QUE TODO ESTA BIEN HASTA ESTE PUNTO CADA MAQUINA DEBE PODER HACER PING A GOOGLE.COM
-## Generar claves SSH
-Para que Ansible pueda comunicarse a las demas maquinas de forma automatica sin intervención humana entre el orquestador (Ansible) y los nodos operativos. 
-### VM4-drp-control
-Esto sirve para crear un par de llaves criptográficas una publica y otra privada
-la encriptacion ed25519 son llaves pequeñas, por eso son mas seguras y rapidas
-```bash
-ssh-keygen -t ed25519 -C "ansible-control" -f ~/.ssh/id_ed25519 -N ""
-```
-Se debe copiar las llaves publicas a los demas servidores para poder entrar a ellas sin usar contrasenia, en este ejemplo todas mis maquinas tienen el usuario "jhoel", pero si se tiene otro usuario se las debe poner el nombre del usuario en vez de jhoel segun la maquina a la que corresponda
-
-Copiar llave a VM1 (MinIO Vault)
-```bash
-ssh-copy-id -i ~/.ssh/id_ed25519.pub jhoel@192.168.50.10
-```
-Copiar llave a VM2 (App Node)
-```bash
-ssh-copy-id -i ~/.ssh/id_ed25519.pub jhoel@192.168.50.20
-```
-Copiar llave a VM3 (DB Node)
-```bash
-ssh-copy-id -i ~/.ssh/id_ed25519.pub jhoel@192.168.50.30
-```
-> Para probar que funciona, el vm4 debe intentar acceder a cualquier otra maquina
-> si le pide contrasenia entonces algo fallo
-> si es que no le pide la contrasenia ni le deja entrar algo fallo
-> si es que no le pide la contrasenia pero si deja entrar entonces esta bien -> autenticación exitosa mediante clave pública
 
 
-## Instalacion de otras Herramientas
-### VM3-db-node
-Verificamos que el disco secundario destinado a los snapshots esté disponible:
-```bash
-lsblk
-```
-> Debe aparecerte el disco de 10 gb, comunmente aparece como sdb
-Para instalar un gestor de volumenes logicos (lvm2)
-que nos permitirá congelar el tiempo (snapshots) sin detener la base de datos
-```bash
-sudo apt update && sudo apt install lvm2 -y
-```
-## VM1 - minio-vault
-Usaremos Docker para levantar MinIO, asi que instalamos docker
-```bash
-sudo apt update && sudo apt install docker.io -y
-```
-> no es el docker oficial si no la version que es mantenido por ubuntu.
+1.  Crea el archivo:
 
-Agregamos al usuario actual al grupo docker para administrar contenedores sin invocar sudo constantemente
-```bash
-sudo usermod -aG docker $USER
-```
-> Este cambio no tiene efecto inmediato. Debes cerrar sesión (exit) y volver a entrar, o ejecutar newgrp docker para refrescar tus credenciales de grupo. Si ignoras esto, Docker te rechazará.
+    ```bash
+    nano monitor.sh
+    ```
 
-## VM4-drp-control
-Instalar ansible para orquestar el DRP es decir es el cerebro de la operación. Ansible será el encargado de ejecutar la resurrección del sistema
-```bash
-sudo apt update && sudo apt install ansible -y
-```
-## Despliegue de MinIO
-## VM1-minio-vault
-crearemos este directorio que servirá como punto de montaje persistente
-si el contenedor de MinIO muere o se reinicia, los datos dentro de él desaparecen. Al mapear esto al host, aseguramos que los backups sobrevivan a la destrucción del contenedor.
-```bash
-sudo mkdir -p /mnt/data
-```
-para darle permisos a minio sobre esa carpeta, MinIO corre por seguridad con el UID 1001, no como root. Si no haces esto, el contenedor arranca, intenta escribir en /data y muere con "Permission Denied" es decir por permisos denegados.
-```bash
-sudo chown -R 1001:1001 /mnt/data
-```
-pegar este bloque completo en uno, en este caso usaremos de contrasenia SuperSecretKey123 pero en un entorno real debe ser una contrasenia mas dificil
-```bash
-docker run -dt \
-  -p 9000:9000 -p 9001:9001 \
-  --name minio \
-  --restart always \
-  -v /mnt/data:/data \
-  -e "MINIO_ROOT_USER=admin" \
-  -e "MINIO_ROOT_PASSWORD=SuperSecretKey123" \
-  minio/minio server /data --console-address ":9001"
-```
-> La bandera --restart always es crítica; si el servidor se reinicia por un fallo eléctrico o error, el servicio de almacenamiento vuelve a levantar automáticamente sin intervención humana.
+    ```bash
+    #!/bin/bash
 
-Para verificar Debería ver algo como "API: http://172.17.0.2:9000"
-```bash
-docker logs minio
-```
-## VM4-drp-control
-Para descargar el ejecutable de minio cliente y lo guarda en una carpeta
-```bash
-curl https://dl.min.io/client/mc/release/linux-amd64/mc \
-  --create-dirs \
-  -o $HOME/minio-binaries/mc
-```
-Le damos permisos de ejecucion. sin esto la maquina pensara que solo un archivo de texto
-```bash
-chmod +x $HOME/minio-binaries/mc
-```
-para que cuando mc este escribiendo, se busque también en esta carpeta
-```bash
-export PATH=$PATH:$HOME/minio-binaries/
-```
-Guarda esa configuración para siempre, para que no tengas que hacerlo cada vez que inicies sesión
-```bash
-echo 'export PATH=$PATH:$HOME/minio-binaries/' >> ~/.bashrc
-```
-Para recargar el perfil
-```bash
-source ~/.bashrc
-```
-con esto unimos la vm4 con la vm1
-mi-boveda asi le llamaremos a la vm1 
-```bash
-mc alias set mi-boveda http://192.168.50.10:9000 admin SuperSecretKey123
-```
-> te deberia aparecer un texto que diga Added `mi-boveda` successfully
-para crear un bucket es decir un contenedor logico dentro de minio llamado backup-repo
-aqui es donde restic guardara los datos cifrados
-```bash
-mc mb mi-boveda/backup-repo
-```
-deberia aparecer la fecha, tamanio y backup-repo/
-```bash
-mc ls mi-boveda
-```
-## VM2 - App Node
-Para actualizar repositorios e intarlar restic
-```bash
-sudo apt update && sudo apt install restic -y
-```
-Para inicializar el repositorio
-```bash
-export AWS_ACCESS_KEY_ID="admin"
-```
-```bash
-export AWS_SECRET_ACCESS_KEY="SuperSecretKey123"
-```
-```bash
-export RESTIC_REPOSITORY="s3:http://192.168.50.10:9000/backup-repo"
-```
-```bash
-export RESTIC_PASSWORD="EncryptionPasswordDoNotLose"
-```
-Para iniciar restic
-```bash
-restic init
-```
-> te deberia salir algo con "created restic repository" continuando por un codigo de hash ejemplo 63832b86e5
-para hacer una prueba, generaremos un archivo basura
-```bash
-sudo mkdir -p /var/www/html
-```
-```bash
-echo "Hola Mundo Resiliente. Si lees esto, la red no ha colapsado." | sudo tee /var/www/html/index.html
-```
-para backup
-```hash
-restic backup /var/www/html --tag "app-deploy-v1"
-```
-> si te sale algo como snapshot <ID> saved donde ID es un codigo entonces esta bien
-## VM3-db-node
-Para actualizar repositorios e instalar restic
-```hash
-sudo apt update && sudo apt install restic -y
-```
-### Importante no fallar
-Inicializar el disco físico
-```hash
-sudo pvcreate /dev/sdb
-```
-Crear el Grupo de Volumen
-```hash
-sudo vgcreate vg_datos /dev/sdb
-```
-Crear el Volumen Lógico
-OJO: Asignamos 6GB. Dejamos 4GB libres para los snapshots
-Un snapshot necesita espacio libre en el VG para crecer
-```bash
-sudo lvcreate -L 6G -n lv_mysql vg_datos
-```
-Formatear y Montar
-```bash
-sudo mkfs.ext4 /dev/vg_datos/lv_mysql
-```
-```bash
-sudo mkdir -p /mnt/mysql-data
-```
-```bash
-sudo mount /dev/vg_datos/lv_mysql /mnt/mysql-data
-```
-Sembraremos datos falsos como simulación de BD
-```bash
-sudo mkdir -p /mnt/mysql-data/db_files
-```
-```bash
-sudo touch /mnt/mysql-data/db_files/users.ibd
-```
-```bash
-echo "DB_PASSWORD=SuperSecretKey" | sudo tee /mnt/mysql-data/db_files/config.php
-```
-Crearemos un script para Congelar (Snapshot) -> Copiar (Backup) -> Descongelar (Remove)
-```bash
-sudo nano /usr/local/bin/backup_db.sh
-```
-Dentro pondremos el script:
+    echo -e "\033[1;32m===   SISTEMA DE VIGILANCIA FÉNIX (Time Travel)   ===\033[0m"
+    echo "Monitoreando Bóveda de Backups en Tiempo Real..."
+    echo "---------------------------------------------------------------"
+
+
+    # Nota: Usamos alias 'mi-boveda' que configuramos en Fase 3
+    mc ls -r mi-boveda/backup-repo/snapshots/ | sort | tail -n 15
+
+    echo "---------------------------------------------------------------"
+    echo -e "\033[1;33m[ACTUALIZANDO CADA 1s]... (Ctrl+C para salir)\033[0m"
+    ```
+
+3.  Guarda y Sal.
+
+4.  Hacerlo ejecutable:
+
+    ```bash
+    chmod +x monitor.sh
+    ```
+
+    ```bash
+    watch -n 1 -c ./monitor.sh
+    ```
+
+-----
+
+En la vm de la base de datos agrega un nuevo script que nos servira para 
+
+
+
+
+
+
+
+
+
+
+### 1\. El Script Auto-Reparable (VM3 - `db-node`)
+
+**El Problema Actual:** Tu error `rc=5`. El script choca con basura vieja.
+**La Solución:** El script "Self-Healing" que limpia antes de cocinar.
+
+**Acción:** Entra a la VM3 y edita:
+`sudo nano /usr/local/bin/backup_db.sh`
+
+**Pega este código (V2.0 Self-Healing):**
+*(Fíjate en la Fase 0, eso es lo que te falta)*
+
 ```bash
 #!/bin/bash
-set -e  # Abortar si cualquier comando falla.
 
-# --- Configuración del Búnker ---
 export AWS_ACCESS_KEY_ID="admin"
 export AWS_SECRET_ACCESS_KEY="SuperSecretKey123"
-# Apunta al MinIO (VM1)
-export RESTIC_REPOSITORY="s3:http://192.168.50.10:9000/backup-repo"
-export RESTIC_PASSWORD="EncryptionPasswordDoNotLose"
+export RESTIC_REPOSITORY="s3:http://minio-vault:9000/backup-repo"
+export RESTIC_PASSWORD="HolaMundo"
 
-# Variables LVM
 VG_NAME="vg_datos"
 LV_NAME="lv_mysql"
 SNAP_NAME="snap_backup"
 MOUNT_POINT="/mnt/snapshot_db"
 
-echo "[1] Creando Snapshot (Congelando estado en el tiempo)..."
-# Creamos un snapshot de 1GB. 
-# Si la base de datos escribe más de 1GB de cambios durante el backup, el snapshot colapsa.
-lvcreate -L 1G -s -n $SNAP_NAME /dev/$VG_NAME/$LV_NAME
+echo "[0] Verificando zona de trabajo..."
+if mountpoint -q $MOUNT_POINT; then
+    umount $MOUNT_POINT
+fi
+if lvdisplay /dev/$VG_NAME/$SNAP_NAME >/dev/null 2>&1; then
+    lvremove -y /dev/$VG_NAME/$SNAP_NAME
+fi
 
-echo "[2] Montando Snapshot (Solo lectura)..."
+echo "[1] Creando Snapshot..."
+lvcreate -L 500M -s -n $SNAP_NAME /dev/$VG_NAME/$LV_NAME
+
+echo "[2] Montando..."
 mkdir -p $MOUNT_POINT
 mount -o ro /dev/$VG_NAME/$SNAP_NAME $MOUNT_POINT
 
-echo "[3] Enviando a la Bóveda..."
-# Hacemos backup del PUNTO DE MONTAJE, no del disco vivo.
+echo "[3] Enviando a bóveda..."
 restic backup $MOUNT_POINT --tag "db-consistent-snap"
 
-echo "[4] Limpieza de la escena del crimen..."
+echo "[4] Limpiando..."
 umount $MOUNT_POINT
 lvremove -y /dev/$VG_NAME/$SNAP_NAME
 
-echo "Operación completada. La base de datos ni se enteró."
+echo "[5] Aplicando retención..."
+restic forget --keep-last 20 --keep-daily 7 --prune
+
+echo "Backup completado exitosamente."
+
 ```
-> Guarda (Ctrl+O, Enter, Ctrl+X)
-para darle los permisos
-```bash
+
+
+
+
+
+Hazlo ejecutable:
+
+Bash
+
 sudo chmod +x /usr/local/bin/backup_db.sh
 ```
-Inicializar el repo desde VM3 también
-```bash
-export AWS_ACCESS_KEY_ID="admin"
-```
-```bash
-export AWS_SECRET_ACCESS_KEY="SuperSecretKey123"
-```
-```bash
-export RESTIC_REPOSITORY="s3:http://192.168.50.10:9000/backup-repo"
-```
-```bash
-export RESTIC_PASSWORD="EncryptionPasswordDoNotLose"
-```
-```bash
-restic init || echo "Repo detectado."
-```
-> Este ultimo dara error si ya existe, en ese caso solo lo ignoras
-para ejecutar el script
-```bash
-sudo /usr/local/bin/backup_db.sh
-```
-## VM4-Admin-Node
-para ver que los bloques encriptados aterrizaron en la Bóveda
-```bash
-mc ls mi-boveda/backup-repo/data/
-```
-> deberia salir algo como esto o parecido en tanto a la estructura:
-> [2025-11-19 15:46:06 UTC]     0B 34/
-> [2025-11-19 15:46:06 UTC]     0B 8a/
-> [2025-11-19 15:46:06 UTC]     0B 99/
-> [2025-11-19 15:46:06 UTC]     0B f4/
 
-# Fase 3: El Cronómetro, Automatización con Systemd
-reemplazaremos cron con Systemd Timers por que este maneja dependencias, reintentos y deja logs binarios (journalctl) que podemos auditar.
-## VM2-App-Node
-Crea el archivo del script para el backup
-```bash
-sudo nano /usr/local/bin/backup_app.sh
-```
-dentro del script:
-```bash
-#!/bin/bash
-set -e
-
-# Credenciales
-export AWS_ACCESS_KEY_ID="admin"
-export AWS_SECRET_ACCESS_KEY="SuperSecretKey123"
-export RESTIC_REPOSITORY="s3:http://192.168.50.10:9000/backup-repo"
-export RESTIC_PASSWORD="EncryptionPasswordDoNotLose"
-
-# 1. El Backup
-echo "Iniciando backup de App..."
-restic backup /var/www/html --tag "app-auto"
-
-# 2. La Limpieza (Política de Retención)
-echo "Aplicando política de retención..."
-restic forget --keep-daily 7 --keep-weekly 4 --prune
-```
-> Guarda (Ctrl+O, Enter) y sal (Ctrl+X)
-para que tenga permisos de ejecucion
-```bash
-sudo chmod +x /usr/local/bin/backup_app.sh
-```
-Esto le dira a systemd qué ejecutar
-```bash
-sudo nano /etc/systemd/system/backup-app.service
-```
-y dentro:
-```bash
-[Unit]
-Description=Restic Backup para Aplicacion
-After=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/backup_app.sh
-User=root
-```
-Le decimos a systemd cuándo disparar el servicio
-```bash
-sudo nano /etc/systemd/system/backup-app.timer
-```
-dentro:
-```bash
-[Unit]
-Description=Ejecuta backup de App cada minuto (Demo)
-
-[Timer]
-OnCalendar=*:*
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-```
-> OnCalendar=*:*:
-> El primer * es la Hora (todas las horas).
-> El : es el separador.
-> El segundo * es el Minuto (todos los minutos).
-
-Systemd calcula el siguiente punto en el tiempo que coincida con ese patrón
-Recargamos el cerebro de systemd y encendemos el timer
-```bash
-sudo systemctl daemon-reload
-```
-```bash
-sudo systemctl enable --now backup-app.timer
-```
-para verificar
-```bash
-systemctl list-timers
-```
-> deberia aparecer backup-app.timer y la columna left en el que debe de estar menos de 1 minuto
-## VM3-db-node
-```bash
-ls -l /usr/local/bin/backup_db.sh
-```
-> Si no sale verde o con x, dale sudo chmod +x /usr/local/bin/backup_db.sh
-Crear el Servicio (.service)
-```bash
-sudo nano /etc/systemd/system/backup-db.service
-```
-dentro:
-```bash
-[Unit]
-Description=Restic Backup para MariaDB (LVM Snapshot)
-After=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/backup_db.sh
-User=root
-```
-Crear el Timer (.timer)
-```bash
-sudo nano /etc/systemd/system/backup-db.timer
-```
-dentro:
-```bash
-[Unit]
-Description=Ejecuta backup de DB cada minuto (Demo)
-
-[Timer]
-OnCalendar=*:*
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-```
-Para activar y verificar:
-```bash
-sudo systemctl daemon-reload
-```
-```bash
-sudo systemctl enable --now backup-db.timer
-```
-para verificar:
-```bash
-systemctl list-timers
-```
-> el primer left debe estar en menos o igual de un minuto, si no lo esta, prueba de nuevo el mismo comando, a veces tarda en actualizarse
-> y si aun no sigue, revisa las configuraciones
-para verificar los logs("Operación completada" y "snapshot saved"):
-```bash
-journalctl -u backup-db.service -n 20 --no-pager
-```
-## VM2 - App Node
-para verificar los logs
-```bash
-journalctl -u backup-app.service -n 20 --no-pager
-```
-## VM4-drp-control
-para ver los nuevo snapshot que se deberian crear cada minuto:
-```bash
-mc ls -r mi-boveda/backup-repo/snapshots/
-```
-> El ciclo de vida de tu minuto:
-
-> 19:29: Se crea el Snapshot A. Restic ve que es el último de hoy. Se lo queda.
-
-> 19:30: Se crea el Snapshot B.
-
-> 19:30 (medio segundo después): Se ejecuta el forget. Restic ve que tiene A (19:29) y B (19:30) para el mismo día. La política dice "guarda 1 por día". Restic borra A y se queda con B.
-
-# Fase 4: DRP con Ansible
-## VM4-drp-control
-para crear y entrar al directorio para la logica de recuperacion
-```bash
-mkdir -p ~/ansible-drp && cd ~/ansible-drp
-```
-para el inventario o victimas de Ansible
-```bash
-nano hosts
-```
-dentro:
-```bash
-[app_servers]
-192.168.50.20 ansible_user=jhoel
-
-[db_servers]
-192.168.50.30 ansible_user=jhoel
-```
-> Guarda (Ctrl+O, Enter) y sal (Ctrl+X).
-para ver que tenga coneccion con el inventario de ansible
-```bash
-ansible all -i hosts -m ping
-```
-> deveria apaarecer "ping": "pong" y SUCCESS si esta bien
-aun dentro de la VM4-drp-control y dentro de ~/ansible-drp
-```bash
-nano restore_app.yml
-```
-ahi dentro de restore_app va este codigo yaml:
-```bash
+bash```
 ---
-- name: DRP - Restauración de Emergencia Aplicación
-  hosts: app_servers
+- name: DRP - Restauración Crítica de Base de Datos
+  hosts: db_servers
   become: yes
   vars:
-    restore_path: "/tmp/rescate_app"
-    repo_url: "s3:http://192.168.50.10:9000/backup-repo"
-    env_vars:
-      AWS_ACCESS_KEY_ID: "admin"
-      AWS_SECRET_ACCESS_KEY: "SuperSecretKey123"
-      RESTIC_REPOSITORY: "{{ repo_url }}"
-      RESTIC_PASSWORD: "EncryptionPasswordDoNotLose"
+    mysql_data_dir: "/var/lib/mysql"
+    temp_restore_dir: "/tmp/db_recovery_zone"
 
   tasks:
-    - name: "[1] Asegurar que Restic esté instalado"
-      apt:
-        name: restic
-        state: present
-        update_cache: yes
+    - name: Detener MariaDB
+      service:
+        name: mariadb
+        state: stopped
 
-    - name: "[2] Crear directorio de zona segura"
+    - name: Limpiar directorio MySQL
+      shell: rm -rf {{ mysql_data_dir }}/*
+
+    - name: Eliminar directorio temporal
       file:
-        path: "{{ restore_path }}"
-        state: directory
-        mode: '0755'
+        path: "{{ temp_restore_dir }}"
+        state: absent
 
-    - name: "[3] Ejecutar Restauración desde la Bóveda"
+    - name: Restaurar en directorio temporal
       shell: |
-        export AWS_ACCESS_KEY_ID="{{ env_vars.AWS_ACCESS_KEY_ID }}"
-        export AWS_SECRET_ACCESS_KEY="{{ env_vars.AWS_SECRET_ACCESS_KEY }}"
-        export RESTIC_PASSWORD="{{ env_vars.RESTIC_PASSWORD }}"        
-        restic -r {{ repo_url }} restore latest --tag "app-deploy-v1" --target {{ restore_path }}
-      register: restore_out
+        restic -r {{ repo_url }} restore {{ snapshot_id | default('latest') }} --target {{ temp_restore_dir }}
 
-    - name: "[4] Reporte de Operación"
-      debug:
-        msg: 
-          - "Restauración Exitosa en: {{ restore_path }}"
-          - "Log Restic: {{ restore_out.stdout }}"
+    - name: Copiar datos restaurados a MySQL
+      shell: cp -a {{ temp_restore_dir }}/mnt/snapshot_db/. {{ mysql_data_dir }}/
+
+    - name: Ajustar permisos
+      file:
+        path: "{{ mysql_data_dir }}"
+        owner: mysql
+        group: mysql
+        recurse: yes
+
+    - name: Iniciar MariaDB
+      service:
+        name: mariadb
+        state: started
 ```
-> Guarda (Ctrl+O, Enter) y sal (Ctrl+X)
-
-# Para probar si funciona:
-## VM2 - App Node
-Para probar que funciona
-verificamos que tenemos aqui
-```bash
-sudo cat /var/www/html/index.html
-```
-borramos index.html
-```bash
-sudo rm -rf /var/www/html/index.html
-```
-verificamos que se haya borrado
-```bash
-ls -l /var/www/html/
-```
-## VM4-drp-control aun en ~/ansible-drp 
-para restaurar:
-
-```bash
-ansible-playbook -i hosts restore_app.yml -K
-```
-
-## VM2 - App Node
-para verificar que volvio 
-```bash
-sudo cat /var/www/html/index.html
-```
------
-# Lo de abajo aun no probado pero creo que si funciona xd
------
-
-# 🕰️ Manual de Restauración Quirúrgica (Por ID)
-
-**Ubicación:** Todo esto se ejecuta desde la **VM4 (`drp-control`)**.
-**Directorio de trabajo:** Asegúrate de estar dentro del búnker:
-
-```bash
-cd ~/ansible-drp
-```
-
-## 1\. El Catálogo de Tiempos (Listar Snapshots)
-
-Para ver qué opciones de viaje en el tiempo tienes, consultamos directamente a la Bóveda (MinIO) usando el cliente `mc`.
-
-**Comando:**
-
-```bash
-mc ls -r mi-boveda/backup-repo/snapshots/
-```
-
-**Traducción:**
-
-  * `mc`: MinIO Client.
-  * `ls -r`: Listar recursivamente.
-  * `mi-boveda/...`: La ruta al bucket donde Restic guarda los metadatos de los snapshots.
-
-**Lo que verás (Ejemplo):**
-
-```text
-[2025-11-19 15:12:33 UTC]   242B STANDARD dd90c8b5d82b7478c83d06099e03aae6ce69e58259f01186e02a016b9229b8c0
-[2025-11-19 19:14:20 UTC]   367B STANDARD 3915ff940516a8e32b0f01dbce9a326703e1f5b91929a1fe5eca43c43c4c6d20
-```
-
-**Interpretación:** Los primeros 8 caracteres del nombre del archivo (ej. `dd90c8b5`) son el **Snapshot ID** corto. Esa es tu coordenada de destino.
 
 -----
 
-## 2\. La Modificación del Hechizo (Editar Playbook)
+### 2\. El Playbook de Trasplante (VM4 - `drp-control`)
 
-Necesitamos decirle a Ansible que deje de buscar etiquetas (`--tag`) y busque un ID específico.
+**El Problema:** Si usas el original, falla con `cp: cannot stat`.
+**La Solución:** La versión que descarga en `/tmp` y mueve los archivos.
 
-Abre tu playbook:
-
+en la VM4 (el cerebro)
 ```bash
-nano restore_app.yml
+sudo apt update && sudo apt install restic -y
 ```
+**Acción:** En VM4, edita:
+`nano ~/ansible-drp/restore_db.yml`
 
-Busca la sección `shell` dentro de la tarea **"[3] Ejecutar Restauración..."** y modifícala.
-
-**ANTES (Modo Automático/Etiqueta):**
+**Asegúrate de que tenga esta estructura (Resumida):**
 
 ```yaml
-    - name: "[3] Ejecutar Restauración desde la Bóveda"
+---
+- name: DRP - Restauración Crítica de Base de Datos
+  hosts: db_servers
+  become: yes
+  vars:
+    mysql_data_dir: "/var/lib/mysql"
+    temp_restore_dir: "/tmp/db_recovery_zone"
+
+  tasks:
+    - name: Detener MariaDB
+      service:
+        name: mariadb
+        state: stopped
+
+    - name: Limpiar directorio MySQL
+      shell: rm -rf {{ mysql_data_dir }}/*
+
+    - name: Eliminar directorio temporal
+      file:
+        path: "{{ temp_restore_dir }}"
+        state: absent
+
+    - name: Restaurar en directorio temporal
       shell: |
-        export AWS_ACCESS_KEY_ID="{{ env_vars.AWS_ACCESS_KEY_ID }}"
-        export AWS_SECRET_ACCESS_KEY="{{ env_vars.AWS_SECRET_ACCESS_KEY }}"
-        export RESTIC_PASSWORD="{{ env_vars.RESTIC_PASSWORD }}"        
-        # Restaurar usando TAG
-        restic -r {{ repo_url }} restore latest --tag "app-deploy-v1" --target {{ restore_path }}
-      register: restore_out
+        restic -r {{ repo_url }} restore {{ snapshot_id | default('latest') }} --target {{ temp_restore_dir }}
+
+    - name: Copiar datos restaurados a MySQL
+      shell: cp -a {{ temp_restore_dir }}/mnt/snapshot_db/. {{ mysql_data_dir }}/
+
+    - name: Ajustar permisos
+      file:
+        path: "{{ mysql_data_dir }}"
+        owner: mysql
+        group: mysql
+        recurse: yes
+
+    - name: Iniciar MariaDB
+      service:
+        name: mariadb
+        state: started
 ```
-
-**DESPUÉS (Modo Quirúrgico/ID):**
-*Reemplaza `<ID_DEL_SNAPSHOT>` con el código que elegiste en el paso 1 (ej. `dd90c8b5`).*
-
-```yaml
-    - name: "[3] Ejecutar Restauración desde la Bóveda"
-      shell: |
-        export AWS_ACCESS_KEY_ID="{{ env_vars.AWS_ACCESS_KEY_ID }}"
-        export AWS_SECRET_ACCESS_KEY="{{ env_vars.AWS_SECRET_ACCESS_KEY }}"
-        export RESTIC_PASSWORD="{{ env_vars.RESTIC_PASSWORD }}"        
-        # Restaurar usando ID ESPECÍFICO
-        restic -r {{ repo_url }} restore dd90c8b5 --target {{ restore_path }}
-      register: restore_out
-```
-
-> **Nota:** Al usar un ID, **borra** las banderas `latest` y `--tag`. Son incompatibles o redundantes cuando especificas el ID directo.
-
-Guarda (`Ctrl+O`, `Enter`) y sal (`Ctrl+X`).
 
 -----
-
-## 3\. La Ejecución (El Botón Rojo)
-
-Lanza el playbook modificado. Ansible pedirá tu contraseña `sudo` (la de `jhoel`).
-
-**Comando:**
+Crearemos un nuevo script para poder simular la destruccion
 
 ```bash
-ansible-playbook -i hosts restore_app.yml -K
+nano ~/ansible-drp/destroy_db.yml
 ```
 
-**Resultado esperado:**
-Si todo sale bien, Ansible te mostrará un JSON al final confirmando que restauró los archivos desde ese ID específico hacia `/tmp/rescate_app`.
+El script:
 
------
+```bash
+---
+- name: Destrucción Total
+  hosts: db_servers
+  become: yes
+  tasks:
+    - name: Detener servicio
+      service:
+        name: mariadb
+        state: stopped
+
+    - name: Eliminar datos
+      shell: rm -rf /var/lib/mysql/*
+      ignore_errors: yes
+
+    - name: Reiniciar servicio
+      service:
+        name: mariadb
+        state: started
+      ignore_errors: yes
+```
+
+
+
+
+
+
+
+
+
+
+
+#### Paso 9.3: El Panel de Control (`menu.sh`)
+
+1.  Crea el archivo:
+
+    ```bash
+    nano menu.sh
+    ```
+
+2.  Este es el script para poder tener el panel (menu):
+
+```bash
+#!/bin/bash
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+export AWS_ACCESS_KEY_ID="admin"
+export AWS_SECRET_ACCESS_KEY="SuperSecretKey123"
+export RESTIC_REPOSITORY="s3:http://minio-vault:9000/backup-repo"
+export RESTIC_PASSWORD="HolaMundo"
+ANSIBLE_DIR="$HOME/ansible-drp"
+
+liberar_candados() {
+    restic unlock > /dev/null 2>&1
+}
+
+ataque_seguro() {
+    liberar_candados
+    echo -e "${RED}--- INICIANDO PROTOCOLO DE DESTRUCCIÓN ---${NC}"
+    echo -e "${YELLOW}Paso 1: Creando respaldo de emergencia...${NC}"
+    OUTPUT=$(ansible db_servers -i $ANSIBLE_DIR/hosts -a "/usr/local/bin/backup_db.sh" --become --ask-become-pass)
+    NEW_ID=$(echo "$OUTPUT" | grep -oP 'snapshot \K[a-f0-9]{8}' | tail -n 1)
+    if [ -z "$NEW_ID" ]; then
+        echo -e "${RED}Error al crear respaldo. Verifique la conexión.${NC}"
+        echo "$OUTPUT"
+    else
+        echo -e "${GREEN}Respaldo creado. ID: ${CYAN}$NEW_ID${NC}"
+        echo "---------------------------------------------------"
+        read -p "Presione Enter para eliminar la base de datos..."
+        echo -e "${RED}Paso 2: Eliminando base de datos...${NC}"
+        cd $ANSIBLE_DIR
+        ansible-playbook -i hosts destroy_db.yml --ask-become-pass
+        echo -e "${RED}Base de datos eliminada.${NC}"
+    fi
+    read -p "Enter..."
+}
+
+seleccionar_snapshot() {
+    liberar_candados
+    local TIPO_TAG=$1
+    echo -e "${YELLOW}--- BUSCANDO RESPALDOS ($TIPO_TAG) ---${NC}"
+    echo "Lista ordenada del más antiguo al más reciente:"
+    restic snapshots --tag $TIPO_TAG | tail -n 20
+    echo ""
+    echo -e "${YELLOW}Ingrese el ID (Columna 1) para restaurar ese momento.${NC}"
+    read -p "Snapshot ID > " SNAP_ID
+    if [ -z "$SNAP_ID" ]; then SNAP_ID="latest"; fi
+    echo "Seleccionado: $SNAP_ID"
+}
+
+while true; do
+    clear
+    echo -e "${BLUE}=================================================${NC}"
+    echo -e "${BLUE}   FÉNIX CONTROL CENTER - PRESENTACIÓN            ${NC}"
+    echo -e "${BLUE}=================================================${NC}"
+    echo -e "1. Verificar Estado (Ping)"
+    echo ""
+    echo -e "${YELLOW}--- WEB APP ---${NC}"
+    echo -e "2. Destruir Web"
+    echo -e "3. Restaurar Web (Elegir Versión)"
+    echo ""
+    echo -e "${YELLOW}--- BASE DE DATOS ---${NC}"
+    echo -e "4. Guardar respaldo y destruir Base de Datos"
+    echo -e "5. Restaurar Base de Datos (Elegir Versión)"
+    echo ""
+    echo -e "6. Salir"
+    echo ""
+    read -p "Opción: " op
+
+    case $op in
+        1) cd $ANSIBLE_DIR && ansible all -i hosts -m ping; read -p "Enter..." ;;
+        2) cd $ANSIBLE_DIR && ansible app_servers -i hosts -a "rm -rf /var/www/html/index.php" --become --ask-become-pass; read -p "Enter..." ;;
+        3) seleccionar_snapshot "app-auto"; cd $ANSIBLE_DIR; time ansible-playbook -i hosts restore_app.yml --ask-become-pass --extra-vars "snapshot_id=$SNAP_ID"; read -p "Enter..." ;;
+        4) ataque_seguro ;;
+        5) seleccionar_snapshot "db-consistent-snap"; cd $ANSIBLE_DIR; time ansible-playbook -i hosts restore_db.yml --ask-become-pass --extra-vars "snapshot_id=$SNAP_ID"; read -p "Enter..." ;;
+        6) exit 0 ;;
+        *) echo "Opción no válida"; sleep 1 ;;
+    esac
+done
+
+```
+
+Ejecuta este script y deberia mostrar una interfas simple, para poder restaurar a algun snapshot.
+
+> Este proyecto es un proyecto backend, por lo que lo poderoso del proyecto no se puede mostrar en haciendo que caiga y reviva el proyecto.  
+> 
+
+
+
+
+
+
+
+
+
+
+
+
