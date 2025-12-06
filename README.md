@@ -108,7 +108,7 @@ Documenta los pasos esenciales para que cualquier persona pueda replicar el proy
 | **Integridad de Snapshot LVM** | El backup no debe bloquear la base de datos ni corromper archivos abiertos durante la escritura. | **[ÉXITO]** Backup realizado en caliente sin errores. |
 
 
-[Para mayor detalle sobre la implementacion](https://github.com/JhoelVillca/SIS-313_PlanDeResiliencia)
+[Para mayor detalle sobre la implementacion](https://github.com/JhoelVillca/sis313-documentacion-proyecto-final/tree/main/Proyecto)
 
 
 ## 📚 VII. Conclusiones y Lecciones Aprendidas
